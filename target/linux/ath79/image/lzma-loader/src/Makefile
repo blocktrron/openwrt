@@ -21,6 +21,8 @@ LOADER_DATA	:=
 BOARD		:=
 FLASH_OFFS	:=
 FLASH_MAX	:=
+FLASH_START	:=
+FLASH_END	:=
 
 CC		:= $(CROSS_COMPILE)gcc
 LD		:= $(CROSS_COMPILE)ld
@@ -56,6 +58,14 @@ endif
 
 ifneq ($(strip $(KERNEL_CMDLINE)),)
 CFLAGS		+= -DCONFIG_KERNEL_CMDLINE='"$(KERNEL_CMDLINE)"'
+endif
+
+ifneq ($(strip $(FLASH_START)),)
+CFLAGS		+= -DCONFIG_FLASH_START=$(FLASH_START)
+endif
+
+ifneq ($(strip $(FLASH_END)),)
+CFLAGS		+= -DCONFIG_FLASH_END=$(FLASH_END)
 endif
 
 ifneq ($(strip $(FLASH_OFFS)),)
@@ -103,6 +113,3 @@ mrproper: clean
 
 clean:
 	rm -f loader *.elf *.bin *.o
-
-
-

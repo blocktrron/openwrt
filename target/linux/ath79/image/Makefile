@@ -28,6 +28,10 @@ define Build/loader-okli-compile
 	$(call Build/loader-common,FLASH_OFFS=$(LOADER_FLASH_OFFS) FLASH_MAX=0)
 endef
 
+define Build/loader-okli-compile-pnor
+	$(call Build/loader-common,FLASH_OFFS=$(LOADER_FLASH_OFFS) FLASH_MAX=0 FLASH_START=0x1e000000 FLASH_END=0x1f000000)
+endef
+
 # Arguments: <output name> <kernel offset>
 define Build/loader-okli
 	dd if=$(KDIR)/loader-$(word 1,$(1)).$(LOADER_TYPE) bs=$(word 2,$(1)) conv=sync of="$@.new"

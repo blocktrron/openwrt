@@ -28,4 +28,12 @@
 #define CONFIG_FLASH_STEP	0x1000
 #endif
 
+#ifndef CONFIG_FLASH_START
+#define CONFIG_FLASH_START	0x1f000000
+#endif
+
+#ifndef CONFIG_FLASH_END
+#define CONFIG_FLASH_END	0x1fe00000
+#endif
+
 #endif /* _CONFIG_H_ */
