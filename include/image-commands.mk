@@ -297,6 +297,7 @@ define Build/sysupgrade-tar
 		--board $(if $(BOARD_NAME),$(BOARD_NAME),$(DEVICE_NAME)) \
 		--kernel $(call param_get_default,kernel,$(1),$(IMAGE_KERNEL)) \
 		--rootfs $(call param_get_default,rootfs,$(1),$(IMAGE_ROOTFS)) \
+		$(if $(call param_get,dtb,$(1)),--dtb $(call param_get,dtb,$(1))) \
 		$@
 endef
 
