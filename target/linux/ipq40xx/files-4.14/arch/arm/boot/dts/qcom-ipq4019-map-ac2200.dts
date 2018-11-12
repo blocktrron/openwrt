@@ -96,11 +96,11 @@
 			#size-cells = <1>;
 
 
-			partition@11 {
+			partition@0 {
 				label = "bootloader";
 				reg = <0x000000000000 0x00000400000>;
 			};
-			partition@11 {
+			partition@1 {
 				label = "ubi";
 				reg = <0x000000400000 0x07c00000>;
 			};
