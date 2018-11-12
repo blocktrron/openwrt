@@ -111,7 +111,7 @@
 &tlmm {
 	serial_pins: serial_pinmux {
 		mux {
-			pins = "gpio60", "gpio61";
+			pins = "gpio16", "gpio17";
 			function = "blsp_uart0";
 			bias-disable;
 		};
