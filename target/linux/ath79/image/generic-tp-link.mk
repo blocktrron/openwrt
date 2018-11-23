@@ -22,6 +22,18 @@ define Device/tplink_archer-c59-v1
 endef
 TARGET_DEVICES += tplink_archer-c59-v1
 
+define Device/tplink_archer-a7-v5
+  $(Device/tplink-safeloader-uimage)
+  ATH_SOC := qca9563
+  DEVICE_TITLE := TP-LINK Archer A7 v5
+  DEVICE_PACKAGES := kmod-usb-core kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k-ct ath10k-firmware-qca988x-ct
+  SUPPORTED_DEVICES := tplink,archer-a7-v5
+  BOARDNAME := ARCHER-A7-V5
+  TPLINK_BOARD_ID := ARCHER-A7-V5
+  IMAGE_SIZE := 15104k
+endef
+TARGET_DEVICES += tplink_archer-a7-v5
+
 define Device/tplink_archer-c7-v1
   $(Device/tplink-8mlzma)
   ATH_SOC := qca9558
