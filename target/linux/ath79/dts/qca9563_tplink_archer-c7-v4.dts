@@ -4,8 +4,8 @@
 #include "qca9563_tplink_archer-x7-v4-v5.dtsi"
 
 / {
-	compatible = "tplink,archer-a7-v5", "qca,qca9563";
-	model = "TP-Link Archer A7 v5";
+	compatible = "tplink,archer-c7-v4", "qca,qca9563";
+	model = "TP-Link Archer C7 v4";
 };
 
 &mtdparts {
@@ -15,30 +15,21 @@
 		read-only;
 	};
 
-	uboot: u-boot@0 {
+	uboot: u-boot@20000 {
 		label = "u-boot";
 		reg = <0x020000 0x020000>;
 		read-only;
 	};
 
-	firmware@40000 {
+	firmware@050000 {
 		label = "firmware";
 		reg = <0x040000 0xec0000>;
 	};
 
-	info: info@f40000 {
+	info: info@f00000 {
 		label = "info";
-		reg = <0xf40000 0x020000>;
-	};
-
-	config: config@f60000 {
-		label = "config";
-		reg = <0xf60000 0x050000>;
-	};
-
-	partition@fc0000 {
-		label = "partition-table";
-		reg = <0xfc0000 0x010000>;
+		reg = <0xf00000 0xf0000>;
+		read-only;
 	};
 
 	art: art@ff0000 {
