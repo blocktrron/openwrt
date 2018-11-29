@@ -21,6 +21,12 @@
 		read-only;
 	};
 
+	partition-table@20000 {
+		label = "partition-table";
+		reg = <0x040000 0x010000>;
+		read-only;
+	};
+
 	art: art@50000 {
 		label = "art";
 		reg = <0x050000 0x010000>;
@@ -29,12 +35,36 @@
 
 	info: info@60000 {
 		label = "info";
-		reg = <0x060000 0x010000>;
+		reg = <0x060000 0x020000>;
+		read-only;
+	};
+
+	config@80000 {
+		label = "config";
+		reg = <0x080000 0x040000>;
 		read-only;
 	};
 
 	firmware@c0000 {
 		label = "firmware";
 		reg = <0xc0000 0xf00000>;
+	};
+
+	log@fc0000 {
+		label = "log";
+		reg = <0xfc0000 0x20000>;
+		read-only;
+	};
+
+	certificate@fe0000 {
+		label = "certificate";
+		reg = <0xfe0000 0x10000>;
+		read-only;
+	};
+
+	default-config@ff0000 {
+		label = "default-config";
+		reg = <0xff0000 0x10000>;
+		read-only;
 	};
 };
