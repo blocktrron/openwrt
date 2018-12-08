@@ -1,0 +1,31 @@
+Index: linux-4.14.82/drivers/Makefile
+===================================================================
+--- linux-4.14.82.orig/drivers/Makefile
++++ linux-4.14.82/drivers/Makefile
+@@ -9,13 +9,16 @@
+ obj-y				+= irqchip/
+ obj-y				+= bus/
+ 
+-obj-$(CONFIG_GENERIC_PHY)	+= phy/
+-
+ # GPIO must come after pinctrl as gpios may need to mux pins etc
+ obj-$(CONFIG_PINCTRL)		+= pinctrl/
+ obj-$(CONFIG_GPIOLIB)		+= gpio/
+ obj-y				+= pwm/
+ 
++# load watchdog before PHY drivers as PHY driver init causes
++# watchdog timeout on some devices
++obj-$(CONFIG_WATCHDOG)		+= watchdog/
++obj-$(CONFIG_GENERIC_PHY)	+= phy/
++
+ obj-$(CONFIG_PCI)		+= pci/
+ obj-$(CONFIG_PCI_ENDPOINT)	+= pci/endpoint/
+ # PCI dwc controller drivers
+@@ -120,7 +123,6 @@ obj-$(CONFIG_W1)		+= w1/
+ obj-y				+= power/
+ obj-$(CONFIG_HWMON)		+= hwmon/
+ obj-$(CONFIG_THERMAL)		+= thermal/
+-obj-$(CONFIG_WATCHDOG)		+= watchdog/
+ obj-$(CONFIG_MD)		+= md/
+ obj-$(CONFIG_BT)		+= bluetooth/
+ obj-$(CONFIG_ACCESSIBILITY)	+= accessibility/
