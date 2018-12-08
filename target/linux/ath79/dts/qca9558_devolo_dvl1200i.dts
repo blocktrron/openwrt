@@ -1,0 +1,13 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+/dts-v1/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+
+#include "qca9558_devolo_dvl1xxx.dtsi"
+
+/ {
+	compatible = "devolo,dvl1200i", "qca,qca9557";
+	model = "devolo WiFi pro 1200i";
+};
+
