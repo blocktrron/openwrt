@@ -1,4 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+/*
+ * The hardware of this board family is most likely shared with other devices from other manufacturers.
+ * Devolo seems to use hardware from Edimax, namely the Edimax WAP1750.
+ *
+ * The base board is identical but the single models differs in number of buttons, ethernet ports,
+ * external console and USB.
+ */
+
 /dts-v1/;
 
 #include <dt-bindings/gpio/gpio.h>
@@ -148,6 +157,23 @@
 		txd-delay = <0>;
 		rgmii-enabled = <1>;
 	};
+};
+
+&mdio1 {
+	phy1: ethernet-phy@1 {
+		reg = <1>;
+		phy-mode = "sgmii";
+	};
+};
+
+&eth1 {
+	mtd-mac-address = <&art 0x00>;
+	mtd-mac-address-increment = <1>;
+
+	phy-handle = <&phy1>;
+	phy-mode = "sgmii";
+
+	pll-data = <0x03000101 0x80000101 0x80001313>;
 };
 
 &wmac {
