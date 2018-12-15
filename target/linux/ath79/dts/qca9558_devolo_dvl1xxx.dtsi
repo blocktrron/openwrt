@@ -117,7 +117,7 @@
 	phy-handle = <&phy4>;
 	pll-data = <0xae000000 0x80000101 0x80001313>;
 
-	gmac-config {
+	gmac_config: gmac-config {
 		device = <&gmac>;
 
 		rxdv-delay = <3>;
