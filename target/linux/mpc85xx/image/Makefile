@@ -44,6 +44,18 @@ define Device/tl-wdr4900-v1
 endef
 TARGET_DEVICES += tl-wdr4900-v1
 
+define Device/red-15w-rev1
+  DEVICE_TITLE := SOPHOS RED 15w Rev.1
+  DEVICE_PACKAGES := kmod-usb2
+  # Original firmware uses a dedicated DTB-partition.
+  # The bootloader however supports FIT-images.
+  KERNEL = kernel-bin | gzip | fit gzip $(KDIR)/image-$$(DEVICE_DTS).dtb
+  IMAGES := sysupgrade.bin
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+  SUPPORTED_DEVICES := sophos,red-15w-rev1
+endef
+TARGET_DEVICES += red-15w-rev1
+
 endif
 
 ifeq ($(SUBTARGET),p1020)
