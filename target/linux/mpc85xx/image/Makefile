@@ -50,9 +50,9 @@ define Device/red-15w-rev1
   # Original firmware uses a dedicated DTB-partition.
   # The bootloader however supports FIT-images.
   KERNEL = kernel-bin | gzip | fit gzip $(KDIR)/image-$$(DEVICE_DTS).dtb
+  SUPPORTED_DEVICES := sophos,red-15w-rev1
   IMAGES := sysupgrade.bin
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
-  SUPPORTED_DEVICES := sophos,red-15w-rev1
 endef
 TARGET_DEVICES += red-15w-rev1
 
@@ -75,6 +75,16 @@ define Device/hiveap-330
 	append-kernel | append-metadata
 endef
 TARGET_DEVICES += hiveap-330
+
+define Device/panda
+  DEVICE_TITLE := OCEDO Panda
+  DEVICE_PACKAGES := kmod-rtc-ds1307 kmod-usb2 uboot-envtools
+  SUPPORTED_DEVICES := ocedo,panda
+  IMAGES := fdt.bin sysupgrade.bin
+  IMAGE/sysupgrade.bin := sysupgrade-tar dtb=$$(KDIR)/image-$$(DEVICE_DTS).dtb | append-metadata
+  IMAGE/fdt.bin := append-dtb
+endef
+TARGET_DEVICES += panda
 
 endif
 

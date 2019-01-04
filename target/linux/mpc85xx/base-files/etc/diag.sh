@@ -9,6 +9,9 @@ get_status_led() {
 	aerohive,hiveap-330)
 		status_led="hiveap-330:green:tricolor0"
 		;;
+	ocedo,panda)
+		status_led="panda:blue:system"
+		;;
 	sophos,red-15w-rev1)
 		status_led="red-15w-rev1:green:system"
 		;;
