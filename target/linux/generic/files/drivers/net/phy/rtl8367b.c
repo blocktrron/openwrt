@@ -1526,9 +1526,13 @@ static int  rtl8367b_probe(struct platform_device *pdev)
 	struct rtl8366_smi *smi;
 	int err;
 
+	pr_warn("Probing rtl8367.\n");
+
 	smi = rtl8366_smi_probe(pdev);
 	if (IS_ERR(smi))
 		return PTR_ERR(smi);
+	
+	pr_warn("Probed rtl8367.\n");
 
 	smi->clk_delay = 1500;
 	smi->cmd_read = 0xb9;
@@ -1546,6 +1550,7 @@ static int  rtl8367b_probe(struct platform_device *pdev)
 	if (err)
 		goto err_free_smi;
 
+	pr_warn("SMI init failed rtl8367.\n");
 	platform_set_drvdata(pdev, smi);
 
 	err = rtl8367b_switch_init(smi);

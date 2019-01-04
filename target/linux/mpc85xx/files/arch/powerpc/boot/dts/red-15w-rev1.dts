@@ -43,6 +43,13 @@
 		};
 	};
 
+	rtl8367rb {
+		compatible = "realtek,rtl8367b", "rtl8367b";
+		cpu_port = <6>;
+		realtek,extif1 = <1 0 1 1 1 1 1 1 2>;
+		mii-bus = <&mdio0>;
+	};
+
 	soc: soc@ffe00000 {
 		ranges = <0x0 0x0 0xffe00000 0x100000>;
 
@@ -68,7 +75,7 @@
 			dr_mode = "host";
 		};
 
-		mdio@24000 {
+		mdio0: mdio@24000 {
 			phy0: ethernet-phy@0 {
 				reg = <0x0>;
 			};
