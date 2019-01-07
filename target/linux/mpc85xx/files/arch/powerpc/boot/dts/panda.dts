@@ -1,0 +1,258 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+/include/ "fsl/p1020si-pre.dtsi"
+/ {
+	model = "OCEDO Panda";
+	compatible = "ocedo,panda";
+
+	chosen {
+		bootargs-override = "console=ttyS0,115200 ubi.mtd=3,2048";
+	};
+
+	memory {
+		device_type = "memory";
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led1 {
+			gpios = <&gpio0 0 0>;
+			label = "panda:green:power";
+			default-state = "on";
+		};
+
+		led2 {
+			gpios = <&gpio0 1 0>;
+			label = "panda:yellow:wlan0";
+			linux,default-trigger = "phy0tpt";
+		};
+
+		led3 {
+			gpios = <&gpio0 2 0>;
+			label = "panda:red:wlan1";
+			linux,default-trigger = "phy1tpt";
+		};
+
+		led4 {
+			gpios = <&gpio0 3 0>;
+			label = "panda:orange:tbd";
+		};
+
+		led5 {
+			gpios = <&gpio0 4 0>;
+			label = "panda:blue:system";
+		};
+	};
+
+	buttons {
+		compatible = "gpio-keys";
+
+		reset {
+			label = "Reset button";
+			gpios = <&gpio0 6 1>;
+			linux,code = <0x198>;
+		};
+	};
+
+	lbc: localbus@ffe05000 {
+		reg = <0 0xffe05000 0 0x1000>;
+		ranges = <0x0 0x0 0x0 0xec000000 0x04000000
+			  0x1 0x0 0x0 0xff800000 0x00040000
+			  0x2 0x0 0x0 0xffa00000 0x00020000
+			  0x3 0x0 0x0 0xffb00000 0x00020000>;
+
+		nand@1,0 {
+			#address-cells = <0x1>;
+			#size-cells = <0x1>;
+			compatible = "fsl,p1020-fcm-nand", "fsl,elbc-fcm-nand";
+			reg = <0x1 0x0 0x40000>;
+
+			partition@0 {
+				reg = <0x0 0xa0000>;
+				label = "uboot";
+				read-only;
+			};
+
+			partition@a0000 {
+				reg = <0xa0000 0x20000>;
+				label = "uboot-env0";
+			};
+
+			partition@c0000 {
+				reg = <0xc0000 0x40000>;
+				label = "uboot-env1";
+			};
+
+			partition@ {
+				reg = < 0x100000 0xff00000>;
+				label = "ubi";
+			};
+		};
+	};
+
+	soc: soc@ffe00000 {
+		ranges = <0x0 0x0 0xffe00000 0x100000>;
+
+		i2c@3000 {
+			rtc@68 {
+				compatible = "dallas,ds1339";
+				reg = <0x68>;
+			};
+		};
+
+		gpio0: gpio-controller@fc00 {
+		};
+
+		mdio@24000 {
+			phy0: ethernet-phy@8 {
+				reg = <0x8>;
+			};
+
+			phy1: ethernet-phy@9 {
+				reg = <0x9>;
+			};
+
+			switch0: ethernet-phy@0 {
+				reg = <0x0>;
+
+				ports {
+					#address-cells = <1>;
+					#size-cells = <0>;
+
+					lan@0 {
+						reg = <0>;
+						label = "lan1";
+					};
+
+					lan@1 {
+						reg = <1>;
+						label = "lan2";
+					};
+
+					lan@2 {
+						reg = <2>;
+						label = "lan3";
+					};
+
+					lan@3 {
+						reg = <3>;
+						label = "lan4";
+					};
+
+					lan@4 {
+						reg = <4>;
+						label = "lan5";
+					};
+
+					lan@5 {
+						reg = <5>;
+						label = "lan6";
+					};
+
+					lan@6 {
+						reg = <6>;
+						label = "lan7";
+					};
+
+					lan@7 {
+						reg = <7>;
+						label = "lan8";
+					};
+
+					cpu@8 {
+						reg = <8>;
+						label = "cpu";
+
+						fixed-link {
+							speed = <1000>;
+							full-duplex;
+						};
+					};
+				};
+			};
+
+			tbi_phy0: tbi-phy@11 {
+				reg = <0x11>;
+			};
+		};
+
+		mdio@25000 {
+			tbi_phy1: tbi-phy@11 {
+				reg = <0x11>;
+			};
+		};
+
+		mdio@26000 {
+			tbi_phy2: tbi-phy@11 {
+				reg = <0x11>;
+			};
+		};
+
+		enet0: ethernet@b0000 {
+			status = "okay";
+			phy-connection-type = "rgmii-id";
+
+			phy-handle = <&switch0>;
+
+			fixed-link {
+				speed = <1000>;
+				full-duplex;
+			};
+		};
+
+		enet1: ethernet@b1000 {
+			status = "okay";
+			phy-handle = <&phy0>;
+			phy-connection-type = "sgmii";
+			tbi-handle = <&tbi_phy1>;
+		};
+
+		enet2: ethernet@b2000 {
+			status = "okay";
+			phy-handle = <&phy1>;
+			phy-connection-type = "sgmii";
+			tbi-handle = <&tbi_phy2>;
+		};
+
+		usb@22000 {
+			phy_type = "ulpi";
+			dr_mode = "host";
+		};
+
+		usb@23000 {
+			status = "disabled";
+		};
+	};
+
+	pci0: pcie@ffe09000 {
+		ranges = <0x2000000 0x0 0xa0000000 0 0xa0000000 0x0 0x20000000
+			  0x1000000 0x0 0x00000000 0 0xffc10000 0x0 0x10000>;
+		reg = <0 0xffe09000 0 0x1000>;
+		pcie@0 {
+			ranges = <0x2000000 0x0 0xa0000000
+				  0x2000000 0x0 0xa0000000
+				  0x0 0x20000000
+
+				  0x1000000 0x0 0x0
+				  0x1000000 0x0 0x0
+				  0x0 0x100000>;
+		};
+	};
+
+	pci1: pcie@ffe0a000 {
+		reg = <0 0xffe0a000 0 0x1000>;
+		ranges = <0x2000000 0x0 0x80000000 0 0x80000000 0x0 0x20000000
+			  0x1000000 0x0 0x00000000 0 0xffc00000 0x0 0x10000>;
+		pcie@0 {
+			ranges = <0x2000000 0x0 0x80000000
+				  0x2000000 0x0 0x80000000
+				  0x0 0x20000000
+
+				  0x1000000 0x0 0x0
+				  0x1000000 0x0 0x0
+				  0x0 0x100000>;
+		};
+	};
+};
+/include/ "fsl/p1020si-post.dtsi"
