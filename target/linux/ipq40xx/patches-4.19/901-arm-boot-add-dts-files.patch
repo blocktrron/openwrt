@@ -20,6 +20,7 @@ Signed-off-by: John Crispin <john@phrozen.org>
 +	qcom-ipq4018-ex6100v2.dtb \
 +	qcom-ipq4018-ex6150v2.dtb \
 +	qcom-ipq4018-fritz4040.dtb \
++	qcom-ipq4018-fritz7530.dtb \
 +	qcom-ipq4018-jalapeno.dtb \
 +	qcom-ipq4018-nbg6617.dtb \
 +	qcom-ipq4018-rt-ac58u.dtb \

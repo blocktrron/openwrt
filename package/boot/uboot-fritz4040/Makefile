@@ -21,12 +21,18 @@ include $(INCLUDE_DIR)/package.mk
 
 define U-Boot/Default
   BUILD_TARGET:=ipq40xx
+  UBOOT_BOARD:=$(1)
+  UBOOT_IMAGE:=uboot-$(1).bin
 endef
 
 define U-Boot/fritz4040
   NAME:=FritzBox 4040
-  UBOOT_IMAGE:=uboot-fritz4040.bin
   BUILD_DEVICES:=avm_fritzbox-4040
+endef
+
+define U-Boot/fritz7530
+  NAME:=FritzBox 7530
+  BUILD_DEVICES:=avm_fritzbox-7530
 endef
 
 UBOOT_CONFIGURE_VARS += USE_PRIVATE_LIBGCC=yes
@@ -42,7 +48,7 @@ endef
 
 define Build/Compile
 	$(Build/Compile/U-Boot)
-	(cd $(PKG_BUILD_DIR); ./fritz/fritzcreator.sh;)
+	(cd $(PKG_BUILD_DIR); ./fritz/fritzcreator.sh $(UBOOT_BOARD);)
 endef
 
 define Build/InstallDev
@@ -55,6 +61,6 @@ define Package/u-boot/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/upload-to-f4040.sh $(1)/
 endef
 
-UBOOT_TARGETS := fritz4040
+UBOOT_TARGETS := fritz4040 fritz7530
 
 $(eval $(call BuildPackage/U-Boot))

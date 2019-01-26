@@ -55,4 +55,5 @@ endef
 $(eval $(call generate-ipq-wifi-package,engenius_eap1300,board-engenius_eap1300.bin,EnGenius EAP1300))
 $(eval $(call generate-ipq-wifi-package,linksys_ea6350v3,board-linksys_ea6350v3.bin,Linksys EA6350v3))
 
+$(eval $(call generate-ipq-wifi-package,fritz7530,fritz7530,AVM FRITZ!Box 7530))
 $(foreach PACKAGE,$(ALLWIFIPACKAGES),$(eval $(call BuildPackage,$(PACKAGE))))
