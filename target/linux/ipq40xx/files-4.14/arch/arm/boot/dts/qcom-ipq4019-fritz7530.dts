@@ -291,6 +291,31 @@
 	status = "okay";
 };
 
+&pcie0 {
+	status = "okay";
+
+	ranges = <0x81000000 0 0x40200000 0x40200000
+			0 0x00100000   /* downstream I/O */
+			0x82000000 0 0x48000000 0x48000000
+			0 0x10000000>; /* non-prefetchable memory */
+
+	perst-gpio = <&tlmm 38 GPIO_ACTIVE_LOW>;
+	wake-gpio = <&tlmm 50 GPIO_ACTIVE_LOW>;
+
+	bridge@0,0 {
+		reg = <0x00000000 0 0 0 0>;
+		#address-cells = <3>;
+		#size-cells = <2>;
+		ranges;
+
+		dsl@1,0 {
+			compatible = "intel,vrx518";
+			status = "okay";
+			reg = <0x00010000 0 0 0 0>;
+		};
+	};
+};
+
 &wifi0 {
 	status = "okay";
 	qcom,ath10k-calibration-variant = "AVM-FRITZBox-7530";

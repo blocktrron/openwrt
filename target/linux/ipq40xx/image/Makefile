@@ -102,7 +102,7 @@ define Device/avm_fritzbox-7530
 	DEVICE_DTS := qcom-ipq4019-fritz7530
 	BOARD_NAME := fritz7530
 	DEVICE_TITLE := AVM Fritz!Box 7530
-	DEVICE_PACKAGES := fritz-caldata ipq-wifi-fritz7530
+	DEVICE_PACKAGES := fritz-caldata ipq-wifi-fritz7530 kmod-ltq-vrx518
 	IMAGES := sysupgrade.bin
 endef
 TARGET_DEVICES += avm_fritzbox-7530
