@@ -1,0 +1,13 @@
+Index: ltq-vrx518-2018-12-06-0a301512/aca.c
+===================================================================
+--- ltq-vrx518-2018-12-06-0a301512.orig/aca.c
++++ ltq-vrx518-2018-12-06-0a301512/aca.c
+@@ -155,7 +155,7 @@ static const struct firmware *aca_fetch_
+ 	char filename[64];
+ 	const struct firmware *fw;
+ 
+-	snprintf(filename, sizeof(filename), "%s/%s", CONFIG_VRX518_FW_PATH,
++	snprintf(filename, sizeof(filename), "%s/%s", "/lib/firmware/vrx518",
+ 		ACA_FW_FILE);
+ 	ret = request_firmware(&fw, filename, priv->dev);
+ 	if (ret) {
