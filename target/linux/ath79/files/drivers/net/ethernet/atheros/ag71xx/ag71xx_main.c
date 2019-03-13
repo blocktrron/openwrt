@@ -267,6 +267,7 @@ static int ag71xx_ring_rx_refill(struct ag71xx *ag)
 
 static int ag71xx_rings_init(struct ag71xx *ag)
 {
+	struct device *dev = &ag->pdev->dev;
 	struct ag71xx_ring *tx = &ag->tx_ring;
 	struct ag71xx_ring *rx = &ag->rx_ring;
 	int ring_size = BIT(tx->order) + BIT(rx->order);
@@ -278,7 +279,7 @@ static int ag71xx_rings_init(struct ag71xx *ag)
 		return -ENOMEM;
 
 	pr_warn("ag71xx_rings_init: Still alive 2\n");
-	tx->descs_cpu = dma_alloc_coherent(NULL, ring_size * AG71XX_DESC_SIZE,
+	tx->descs_cpu = dma_alloc_coherent(dev, ring_size * AG71XX_DESC_SIZE,
 					   &tx->descs_dma, GFP_ATOMIC);
 	pr_warn("ag71xx_rings_init: Still alive 3\n");
 	if (!tx->descs_cpu) {
