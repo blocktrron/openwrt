@@ -280,6 +280,7 @@ static int ag71xx_rings_init(struct ag71xx *ag)
 	pr_warn("ag71xx_rings_init: Still alive 2\n");
 	tx->descs_cpu = dma_alloc_coherent(NULL, ring_size * AG71XX_DESC_SIZE,
 					   &tx->descs_dma, GFP_ATOMIC);
+	pr_warn("ag71xx_rings_init: Still alive 3\n");
 	if (!tx->descs_cpu) {
 		kfree(tx->buf);
 		tx->buf = NULL;
@@ -291,6 +292,7 @@ static int ag71xx_rings_init(struct ag71xx *ag)
 	rx->descs_dma = tx->descs_dma + tx_size * AG71XX_DESC_SIZE;
 
 	ag71xx_ring_tx_init(ag);
+	pr_warn("ag71xx_rings_init: Still alive 4\n");
 	return ag71xx_ring_rx_init(ag);
 }
 
