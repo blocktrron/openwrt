@@ -985,9 +985,15 @@ static int ag71xx_do_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 	return -EOPNOTSUPP;
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,15,0)
 static void ag71xx_oom_timer_handler(unsigned long data)
 {
 	struct net_device *dev = (struct net_device *) data;
+#else
+static void ag71xx_oom_timer_handler(struct timer_list *data)
+{
+	struct net_device *dev = (struct net_device *) data->flags;
+#endif
 	struct ag71xx *ag = netdev_priv(dev);
 
 	napi_schedule(&ag->napi);
@@ -1418,10 +1424,13 @@ static int ag71xx_probe(struct platform_device *pdev)
 
 	INIT_DELAYED_WORK(&ag->restart_work, ag71xx_restart_work_func);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,15,0)
 	init_timer(&ag->oom_timer);
 	ag->oom_timer.data = (unsigned long) dev;
 	ag->oom_timer.function = ag71xx_oom_timer_handler;
-
+#else
+	timer_setup(&ag->oom_timer, ag71xx_oom_timer_handler, (unsigned long) dev);
+#endif
 	tx_size = AG71XX_TX_RING_SIZE_DEFAULT;
 	ag->rx_ring.order = ag71xx_ring_size_order(AG71XX_RX_RING_SIZE_DEFAULT);
 
