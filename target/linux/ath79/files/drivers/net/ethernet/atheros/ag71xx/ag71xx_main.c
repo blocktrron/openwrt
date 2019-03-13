@@ -272,10 +272,12 @@ static int ag71xx_rings_init(struct ag71xx *ag)
 	int ring_size = BIT(tx->order) + BIT(rx->order);
 	int tx_size = BIT(tx->order);
 
+	pr_warn("ag71xx_rings_init: Still alive 1\n");
 	tx->buf = kzalloc(ring_size * sizeof(*tx->buf), GFP_KERNEL);
 	if (!tx->buf)
 		return -ENOMEM;
 
+	pr_warn("ag71xx_rings_init: Still alive 2\n");
 	tx->descs_cpu = dma_alloc_coherent(NULL, ring_size * AG71XX_DESC_SIZE,
 					   &tx->descs_dma, GFP_ATOMIC);
 	if (!tx->descs_cpu) {
@@ -749,14 +751,19 @@ static int ag71xx_hw_enable(struct ag71xx *ag)
 {
 	int ret;
 
+	pr_warn("ag71xx_hw_enable: Still alive 1\n");
 	ret = ag71xx_rings_init(ag);
 	if (ret)
 		return ret;
 
+	pr_warn("ag71xx_hw_enable: Still alive 2\n");
+
 	napi_enable(&ag->napi);
+	pr_warn("ag71xx_hw_enable: Still alive 3\n");
 	ag71xx_wr(ag, AG71XX_REG_TX_DESC, ag->tx_ring.descs_dma);
 	ag71xx_wr(ag, AG71XX_REG_RX_DESC, ag->rx_ring.descs_dma);
 	netif_start_queue(ag->dev);
+	pr_warn("ag71xx_hw_enable: Still alive 4\n");
 
 	return 0;
 }
