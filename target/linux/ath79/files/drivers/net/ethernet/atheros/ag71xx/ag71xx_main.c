@@ -277,6 +277,11 @@ static int ag71xx_rings_init(struct ag71xx *ag)
 	if (!tx->buf)
 		return -ENOMEM;
 
+	err = dma_set_coherent_mask(&ag->dev->dev, DMA_BIT_MASK(32));
+	if (err) {
+		return err;
+	}
+
 	pr_warn("ag71xx_rings_init: Still alive 2\n");
 	tx->descs_cpu = dma_alloc_coherent(&ag->dev->dev, ring_size * AG71XX_DESC_SIZE,
 					   &tx->descs_dma, GFP_ATOMIC | __GFP_ZERO);
@@ -1351,11 +1356,6 @@ static int ag71xx_probe(struct platform_device *pdev)
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (!res)
 		return -EINVAL;
-
-	err = dma_set_coherent_mask(&dev->dev, DMA_BIT_MASK(32));
-	if (err) {
-		return err;
-	}
 
 	err = ag71xx_setup_gmac(np);
 	if (err)
