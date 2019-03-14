@@ -1352,7 +1352,7 @@ static int ag71xx_probe(struct platform_device *pdev)
 	if (!res)
 		return -EINVAL;
 
-	err = dma_set_coherent_mask(&dev->dev, DMA_BIT_MASK(32)
+	err = dma_set_coherent_mask(&dev->dev, DMA_BIT_MASK(32);
 	if (err) {
 		return err;
 	}
