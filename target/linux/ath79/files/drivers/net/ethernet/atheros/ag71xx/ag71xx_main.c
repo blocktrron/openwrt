@@ -271,6 +271,7 @@ static int ag71xx_rings_init(struct ag71xx *ag)
 	struct ag71xx_ring *rx = &ag->rx_ring;
 	int ring_size = BIT(tx->order) + BIT(rx->order);
 	int tx_size = BIT(tx->order);
+	int err;
 
 	pr_warn("ag71xx_rings_init: Still alive 1\n");
 	tx->buf = kzalloc(ring_size * sizeof(*tx->buf), GFP_KERNEL);
