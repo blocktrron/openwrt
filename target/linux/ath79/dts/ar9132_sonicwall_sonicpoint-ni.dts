@@ -1,0 +1,165 @@
+// SPDX-License-Identifier: GPL-2.0+ or MIT
+/dts-v1/;
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+
+#include "ar9132.dtsi"
+
+/ {
+	compatible = "sonicwall,sonicpoint-ni", "qca,ar9132";
+	model = "Sonicwall SonicPoint Ni";
+
+	chosen {
+		bootargs = "console=ttyS0,115200n8";
+	};
+
+	aliases {
+		led-boot = &led_system;
+		led-failsafe = &led_system;
+		led-running = &led_system;
+		led-upgrade = &led_system;
+
+		label-mac-device = &eth0;
+	};
+
+	extosc: ref {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <40000000>;
+	};
+
+	keys {
+		compatible = "gpio-keys";
+
+		reset_btn {
+			label = "RESET button";
+			linux,code = <KEY_RESTART>;
+			gpios = <&gpio 11 GPIO_ACTIVE_LOW>;
+			debounce-interval = <60>;
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led_system: system {
+			label = "sonicpoint-ni:yellow:system";
+			gpios = <&gpio 9 GPIO_ACTIVE_LOW>;
+		};
+
+		wifi_link {
+			label = "sonicpoint-ni:yellow:wifi_link";
+			gpios = <&gpio 7 GPIO_ACTIVE_LOW>;
+		};
+
+		wifi_act {
+			label = "sonicpoint-ni:green:wifi_act";
+			gpios = <&gpio 8 GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "phy0tpt";
+		};
+	};
+
+	gpio-export {
+		compatible = "gpio-export";
+
+		gpio_led_power {
+			gpio-export,name = "sonicpoint-ni:toggle:leds_off";
+			gpio-export,output = <0>;
+			gpios = <&gpio 17 GPIO_ACTIVE_HIGH>;
+		};
+	};
+
+	flash@1e000000 {
+		compatible = "cfi-flash";
+		reg = <0x1e000000 0x1000000>;
+		bank-width = <2>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "u-boot";
+				reg = <0 0x40000>;
+				read-only;
+			};
+
+			partition@40000 {
+				label ="u-boot-env";
+				reg = <0x40000 0x20000>;
+			};
+
+			partition@60000 {
+				/* Recovery OS */
+				label = "sm";
+				reg = <0x60000 0x400000>;
+				read-only;
+			};
+
+			partition@460000 {
+				compatible = "denx,uimage";
+				label ="firmware";
+				reg = <0x460000 0x800000>;
+			};
+
+			partition@c60000 {
+				label ="config";
+				reg = <0xc60000 0x2a0000>;
+				read-only;
+			};
+
+			partition@f00000 {
+				label ="info";
+				reg = <0xf00000 0xc0000>;
+				read-only;
+			};
+
+			sysinfo: partition@fc0000 {
+				label ="sysinfo";
+				reg = <0xfc0000 0x20000>;
+				read-only;
+			};
+
+			art: partition@fe0000 {
+				label = "art";
+				reg = <0xfe0000 0x20000>;
+				read-only;
+			};
+		};
+	};
+};
+
+&uart {
+	status = "okay";
+};
+
+&pll {
+	clocks = <&extosc>;
+};
+
+&mdio0 {
+	status = "okay";
+
+	phy0: ethernet-phy@0 {
+		reg = <0>;
+		/*marvell,reg-init = <0x2 21 0xFFCF 0x20>;  Enable RX-delay */
+	};
+};
+
+&eth0 {
+	status = "okay";
+
+	phy-mode = "rgmii-rxid";
+	phy-handle = <&phy0>;
+	mtd-mac-address = <&sysinfo 0x50>;
+};
+
+&wmac {
+	status = "okay";
+
+	mtd-cal-data = <&art 0x11000>;
+	mtd-mac-address = <&sysinfo 0x50>;
+	mtd-mac-address-increment = <1>;
+};

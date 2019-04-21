@@ -1097,6 +1097,22 @@ define Device/sitecom_wlr-8100
 endef
 TARGET_DEVICES += sitecom_wlr-8100
 
+define Device/sonicwall_sonicpoint-ni
+  ATH_SOC := ar9132
+  DEVICE_TITLE := Sonicwall SonicPoint Ni
+  BLOCKSIZE := 128k
+  LOADER_TYPE := bin
+  LOADER_FLASH_OFFS := 0x462000
+  COMPILE := loader-$(1).gz
+  COMPILE/loader-$(1).gz := loader-okli-compile-pnor
+  IMAGE_SIZE := 8192k
+  IMAGES := sysupgrade.bin
+  KERNEL := kernel-bin | append-dtb | lzma | uImage lzma -M 0x4f4b4c49 | loader-okli $(1) 8128 | uImage none
+  KERNEL_INITRAMFS := kernel-bin | append-dtb | gzip | uImage gzip
+  DEVICE_PACKAGES := -swconfig
+endef
+TARGET_DEVICES += sonicwall_sonicpoint-ni
+
 define Device/teltonika_rut955
   SOC := ar9344
   DEVICE_VENDOR := Teltonika

@@ -60,6 +60,9 @@ netgear,wndr4300)
 qihoo,c301)
 	ubootenv_add_uci_config "/dev/mtd9" "0x0" "0x10000" "0x10000"
 	;;
+sonicwall,sonicpoint-ni)
+	ubootenv_add_uci_config "/dev/mtd1" "0x0" "0x20000" "0x20000"
+	;;
 esac
 
 config_load ubootenv
