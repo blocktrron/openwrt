@@ -1,0 +1,61 @@
+From cd28d1d6e52e740130745429b3ff0af7cbba7b2c Mon Sep 17 00:00:00 2001
+From: Vinod Koul <vkoul@kernel.org>
+Date: Mon, 21 Jan 2019 14:43:17 +0530
+Subject: [PATCH] net: phy: at803x: Disable phy delay for RGMII mode
+
+For RGMII mode, phy delay should be disabled. Add this case along
+with disable delay routines.
+
+Signed-off-by: Vinod Koul <vkoul@kernel.org>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+---
+ drivers/net/phy/at803x.c | 22 ++++++++++++----------
+ 1 file changed, 12 insertions(+), 10 deletions(-)
+
+--- a/drivers/net/phy/at803x.c
++++ b/drivers/net/phy/at803x.c
+@@ -122,16 +122,16 @@ static int at803x_debug_reg_mask(struct
+ 	return phy_write(phydev, AT803X_DEBUG_DATA, val);
+ }
+ 
+-static inline int at803x_enable_rx_delay(struct phy_device *phydev)
++static inline int at803x_disable_rx_delay(struct phy_device *phydev)
+ {
+-	return at803x_debug_reg_mask(phydev, AT803X_DEBUG_REG_0, 0,
+-					AT803X_DEBUG_RX_CLK_DLY_EN);
++	return at803x_debug_reg_mask(phydev, AT803X_DEBUG_REG_0,
++				     AT803X_DEBUG_RX_CLK_DLY_EN, 0);
+ }
+ 
+-static inline int at803x_enable_tx_delay(struct phy_device *phydev)
++static inline int at803x_disable_tx_delay(struct phy_device *phydev)
+ {
+-	return at803x_debug_reg_mask(phydev, AT803X_DEBUG_REG_5, 0,
+-					AT803X_DEBUG_TX_CLK_DLY_EN);
++	return at803x_debug_reg_mask(phydev, AT803X_DEBUG_REG_5,
++				     AT803X_DEBUG_TX_CLK_DLY_EN, 0);
+ }
+ 
+ /* save relevant PHY registers to private copy */
+@@ -321,15 +321,17 @@ static int at803x_config_init(struct phy
+ 		return ret;
+ 
+ 	if (phydev->interface == PHY_INTERFACE_MODE_RGMII_RXID ||
+-			phydev->interface == PHY_INTERFACE_MODE_RGMII_ID) {
+-		ret = at803x_enable_rx_delay(phydev);
++			phydev->interface == PHY_INTERFACE_MODE_RGMII_ID ||
++			phydev->interface == PHY_INTERFACE_MODE_RGMII) {
++		ret = at803x_disable_rx_delay(phydev);
+ 		if (ret < 0)
+ 			return ret;
+ 	}
+ 
+ 	if (phydev->interface == PHY_INTERFACE_MODE_RGMII_TXID ||
+-			phydev->interface == PHY_INTERFACE_MODE_RGMII_ID) {
+-		ret = at803x_enable_tx_delay(phydev);
++			phydev->interface == PHY_INTERFACE_MODE_RGMII_ID ||
++			phydev->interface == PHY_INTERFACE_MODE_RGMII) {
++		ret = at803x_disable_tx_delay(phydev);
+ 		if (ret < 0)
+ 			return ret;
+ 	}
