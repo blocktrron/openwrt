@@ -1,0 +1,62 @@
+--- a/drivers/net/phy/at803x.c
++++ b/drivers/net/phy/at803x.c
+@@ -134,6 +134,20 @@ static int at803x_enable_tx_delay(struct
+ 				     AT803X_DEBUG_TX_CLK_DLY_EN);
+ }
+ 
++static int at803x_get_rx_delay(struct phy_device *phydev)
++{
++	int v;
++	v = at803x_debug_reg_read(phydev, AT803X_DEBUG_REG_0) & AT803X_DEBUG_RX_CLK_DLY_EN;
++	return v ? 1 : 0;
++}
++
++static int at803x_get_tx_delay(struct phy_device *phydev)
++{
++	int v;
++	v = at803x_debug_reg_read(phydev, AT803X_DEBUG_REG_5) & AT803X_DEBUG_TX_CLK_DLY_EN;
++	return v ? 1 : 0;
++}
++
+ static inline int at803x_disable_rx_delay(struct phy_device *phydev)
+ {
+ 	return at803x_debug_reg_mask(phydev, AT803X_DEBUG_REG_0,
+@@ -329,6 +343,19 @@ static int at803x_config_init(struct phy
+ 	}
+ 
+ 	ret = genphy_config_init(phydev);
++
++	if (at803x_get_rx_delay(phydev)) {
++		pr_warn("RX Delay active");
++	} else {
++		pr_warn("RX Delay not active");
++	}
++
++	if (at803x_get_tx_delay(phydev)) {
++		pr_warn("TX Delay active");
++	} else {
++		pr_warn("TX Delay not active");
++	}
++
+ 	if (ret < 0)
+ 		return ret;
+ 
+@@ -387,6 +414,18 @@ static int at803x_config_init(struct phy
+ 				AT803X_DEBUG_TX_CLK_DLY_EN, 0);
+ 	}
+ 
++	if (at803x_get_rx_delay(phydev)) {
++		pr_warn("RX Delay active");
++	} else {
++		pr_warn("RX Delay not active");
++	}
++
++	if (at803x_get_tx_delay(phydev)) {
++		pr_warn("TX Delay active");
++	} else {
++		pr_warn("TX Delay not active");
++	}
++
+ #ifdef CONFIG_OF_MDIO
+ 	if (phydev->mdio.dev.of_node &&
+ 		of_property_read_bool(phydev->mdio.dev.of_node,
