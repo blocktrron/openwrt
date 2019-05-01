@@ -25,6 +25,7 @@ endef
 
 ALLWIFIBOARDS:= \
 	alfa-network_ap120c-ac \
+	asus_map-ac1300 \
 	asus_map-ac2200 \
 	avm_fritzbox-7530 \
 	avm_fritzrepeater-3000 \
@@ -96,6 +97,7 @@ endef
 # Add $(eval $(call generate-ipq-wifi-package,<devicename>,<display name>))
 
 $(eval $(call generate-ipq-wifi-package,alfa-network_ap120c-ac,ALFA Network AP120C-AC))
+$(eval $(call generate-ipq-wifi-package,asus_map-ac1300,ASUS MAP-AC1300))
 $(eval $(call generate-ipq-wifi-package,asus_map-ac2200,ASUS MAP-AC2200))
 $(eval $(call generate-ipq-wifi-package,avm_fritzbox-7530,AVM FRITZ!Box 7530))
 $(eval $(call generate-ipq-wifi-package,avm_fritzrepeater-3000,AVM FRITZ!Repeater 3000))
