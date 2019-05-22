@@ -85,6 +85,15 @@ define Device/alfa-network_ap120c-ac
 endef
 TARGET_DEVICES += alfa-network_ap120c-ac
 
+define Device/asus_map-ac1300
+	$(call Device/FitImageLzma)
+	DEVICE_DTS := qcom-ipq4018-map-ac1300
+	DEVICE_TITLE := ASUS Lyra MAP-AC1300
+	IMAGES := sysupgrade.bin
+	DEVICE_PACKAGES := kmod-ath3k
+endef
+TARGET_DEVICES += asus_map-ac1300
+
 define Device/asus_map-ac2200
 	$(call Device/FitImageLzma)
 	DEVICE_DTS := qcom-ipq4019-map-ac2200

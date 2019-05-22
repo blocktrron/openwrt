@@ -133,6 +133,7 @@ case "$FIRMWARE" in
 	qcom,ap-dk01.1-c1)
 		ath10kcal_extract "ART" 4096 12064
 		;;
+	asus,map-ac1300|\
 	asus,map-ac2200)
 		ath10kcal_ubi_extract "Factory" 4096 12064
 		;;
@@ -190,6 +191,7 @@ case "$FIRMWARE" in
 	qcom,ap-dk01.1-c1)
 		ath10kcal_extract "ART" 20480 12064
 		;;
+	asus,map-ac1300|\
 	asus,map-ac2200)
 		ath10kcal_ubi_extract "Factory" 20480 12064
 		;;

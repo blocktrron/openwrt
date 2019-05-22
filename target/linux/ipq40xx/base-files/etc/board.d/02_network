@@ -17,6 +17,7 @@ ipq40xx_setup_interfaces()
 	engenius,ens620ext)
 		ucidef_set_interfaces_lan_wan "eth0" "eth1"
 		;;
+	asus,map-ac1300|\
 	asus,map-ac2200|\
 	openmesh,a42|\
 	openmesh,a62)

@@ -53,6 +53,7 @@ platform_do_upgrade() {
 	qxwlan,e2600ac-c2)
 		nand_do_upgrade "$ARGV"
 		;;
+	asus,map-ac1300|\
 	asus,map-ac2200)
 		CI_KERNPART="linux"
 		nand_do_upgrade "$1"
