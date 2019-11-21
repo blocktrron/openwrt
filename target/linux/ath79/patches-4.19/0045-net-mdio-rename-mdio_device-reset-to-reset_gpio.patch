@@ -1,0 +1,78 @@
+From 5cbf0718e170b237e02a9ed5506f8a0ceed99d3a Mon Sep 17 00:00:00 2001
+From: David Bauer <mail@david-bauer.net>
+Date: Thu, 11 Apr 2019 21:16:26 +0200
+Subject: [PATCH 2/2] net: mdio: rename mdio_device reset to reset_gpio
+
+This renames the GPIO reset of mdio devices from 'reset' to
+'reset_gpio' to better differentiate between GPIO and
+reset-controller driven reset line.
+
+Signed-off-by: David Bauer <mail@david-bauer.net>
+---
+ drivers/net/phy/at803x.c      | 2 +-
+ drivers/net/phy/mdio_bus.c    | 6 +++---
+ drivers/net/phy/mdio_device.c | 6 +++---
+ include/linux/mdio.h          | 2 +-
+ 4 files changed, 8 insertions(+), 8 deletions(-)
+
+--- a/drivers/net/phy/at803x.c
++++ b/drivers/net/phy/at803x.c
+@@ -398,7 +398,7 @@ static void at803x_link_change_notify(st
+ 	 * cannot recover from by software.
+ 	 */
+ 	if (phydev->state == PHY_NOLINK) {
+-		if (phydev->mdio.reset && !priv->phy_reset) {
++		if (phydev->mdio.reset_gpio && !priv->phy_reset) {
+ 			struct at803x_context context;
+ 
+ 			at803x_context_save(phydev, &context);
+--- a/drivers/net/phy/mdio_bus.c
++++ b/drivers/net/phy/mdio_bus.c
+@@ -62,7 +62,7 @@ static int mdiobus_register_gpiod(struct
+ 	else if (IS_ERR(gpiod))
+ 		return PTR_ERR(gpiod);
+ 
+-	mdiodev->reset = gpiod;
++	mdiodev->reset_gpio = gpiod;
+ 
+ 	return 0;
+ }
+@@ -473,8 +473,8 @@ void mdiobus_unregister(struct mii_bus *
+ 		if (!mdiodev)
+ 			continue;
+ 
+-		if (mdiodev->reset)
+-			gpiod_put(mdiodev->reset);
++		if (mdiodev->reset_gpio)
++			gpiod_put(mdiodev->reset_gpio);
+ 
+ 		mdiodev->device_remove(mdiodev);
+ 		mdiodev->device_free(mdiodev);
+--- a/drivers/net/phy/mdio_device.c
++++ b/drivers/net/phy/mdio_device.c
+@@ -122,11 +122,11 @@ void mdio_device_reset(struct mdio_devic
+ {
+ 	unsigned int d;
+ 
+-	if (!mdiodev->reset && !mdiodev->reset_ctrl)
++	if (!mdiodev->reset_gpio && !mdiodev->reset_ctrl)
+ 		return;
+ 
+-	if (mdiodev->reset)
+-		gpiod_set_value(mdiodev->reset, value);
++	if (mdiodev->reset_gpio)
++		gpiod_set_value(mdiodev->reset_gpio, value);
+ 
+ 	if (mdiodev->reset_ctrl) {
+ 		if (value)
+--- a/include/linux/mdio.h
++++ b/include/linux/mdio.h
+@@ -40,7 +40,7 @@ struct mdio_device {
+ 	/* Bus address of the MDIO device (0-31) */
+ 	int addr;
+ 	int flags;
+-	struct gpio_desc *reset;
++	struct gpio_desc *reset_gpio;
+ 	struct reset_control *reset_ctrl;
+ 	unsigned int reset_assert_delay;
+ 	unsigned int reset_deassert_delay;
