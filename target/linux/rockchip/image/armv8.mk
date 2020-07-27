@@ -6,6 +6,7 @@
 #
 
 define Device/friendlyarm_nanopi-r2s
+  $(call Device/FitImageLzma)
   DEVICE_VENDOR := FriendlyARM
   DEVICE_MODEL := NanoPi R2S
   SOC := rk3328
