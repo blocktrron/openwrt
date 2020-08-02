@@ -48,7 +48,8 @@ ALLWIFIBOARDS:= \
 	plasmacloud_pa1200 \
 	plasmacloud_pa2200 \
 	qxwlan_e2600ac \
-	tp-link_archer-c58-v1
+	tp-link_archer-c58-v1 \
+	tp-link_archer-c59-v1
 
 ALLWIFIPACKAGES:=$(foreach BOARD,$(ALLWIFIBOARDS),ipq-wifi-$(BOARD))
 
@@ -133,5 +134,6 @@ $(eval $(call generate-ipq-wifi-package,plasmacloud_pa1200,Plasma Cloud PA1200))
 $(eval $(call generate-ipq-wifi-package,plasmacloud_pa2200,Plasma Cloud PA2200))
 $(eval $(call generate-ipq-wifi-package,qxwlan_e2600ac,Qxwlan E2600AC))
 $(eval $(call generate-ipq-wifi-package,tp-link_archer-c58-v1,TP-Link Archer C58 v1))
+$(eval $(call generate-ipq-wifi-package,tp-link_archer-c59-v1,TP-Link Archer C59 v1))
 
 $(foreach PACKAGE,$(ALLWIFIPACKAGES),$(eval $(call BuildPackage,$(PACKAGE))))

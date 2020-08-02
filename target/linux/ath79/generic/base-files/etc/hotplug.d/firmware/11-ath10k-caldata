@@ -214,11 +214,11 @@ case "$FIRMWARE" in
 		ln -sf /lib/firmware/ath10k/pre-cal-pci-0000\:00\:00.0.bin \
 			/lib/firmware/ath10k/QCA9888/hw2.0/board.bin
 		;;
-	tplink,archer-c58-v1)
+	tplink,archer-c58-v1|\
+	tplink,archer-c59-v1)
 		caldata_extract "art" 0x5000 0x2f20
 		ath10k_patch_mac $(macaddr_add $(mtd_get_mac_binary mac 0x8) -1)
 		;;
-	tplink,archer-c59-v1|\
 	tplink,archer-c59-v2|\
 	tplink,archer-c60-v1|\
 	tplink,archer-c60-v2|\
