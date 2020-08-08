@@ -52,3 +52,7 @@
 		};
 	};
 };
+
+&ath10k {
+	qcom,ath10k-calibration-variant = "Archer-C58-v1";
+};
