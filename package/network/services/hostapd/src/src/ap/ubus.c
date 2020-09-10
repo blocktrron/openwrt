@@ -14,6 +14,7 @@
 #include "hostapd.h"
 #include "neighbor_db.h"
 #include "wps_hostapd.h"
+#include "ap_list.h"
 #include "sta_info.h"
 #include "ubus.h"
 #include "ap_drv_ops.h"
@@ -1183,6 +1184,54 @@ hostapd_rrm_beacon_req(struct ubus_context *ctx, struct ubus_object *obj,
 	return 0;
 }
 
+static int
+hostapd_ap_list(struct ubus_context *ctx, struct ubus_object *obj,
+		struct ubus_request_data *req, const char *method,
+		struct blob_attr *msg)
+{
+	struct hostapd_data *hapd = get_hapd_from_object(obj);
+	struct hostapd_iface *iface = hapd->iface;
+	struct os_reltime now;
+	struct ap_info *ap;
+	char mac_buf[20];
+	void *list, *c;
+
+	os_get_reltime(&now);
+	blob_buf_init(&b, 0);
+
+	list = blobmsg_open_table(&b, "aps");
+	for (ap = iface->ap_list; ap; ap = ap->next) {
+		struct os_reltime age;
+		int rate;
+		void *r;
+		int i;
+
+		os_reltime_sub(&now, &ap->last_beacon, &age);
+		sprintf(mac_buf, MACSTR, MAC2STR(ap->addr));
+
+		c = blobmsg_open_table(&b, mac_buf);
+		r = blobmsg_open_array(&b, "supported_rates");
+		for (i = 0; i < WLAN_SUPP_RATES_MAX; i++) {
+			if (ap->supported_rates[i] == 0)
+				continue;
+			
+			rate = (ap->supported_rates[i] & 0x7f) * 0.5;
+			blobmsg_add_u32(&b, "", rate);
+		}
+		blobmsg_close_array(&b, r);
+
+		blobmsg_add_u32(&b, "erp", ap->erp);
+		blobmsg_add_u32(&b, "age", age.sec);
+		blobmsg_add_u32(&b, "channel", ap->channel);
+		blobmsg_add_u32(&b, "ht_support", ap->ht_support);
+		blobmsg_close_table(&b, c);
+	}
+	blobmsg_close_table(&b, list);
+	ubus_send_reply(ctx, req, b.head);
+
+	return 0;
+}
+
 
 #ifdef CONFIG_WNM_AP
 enum {
@@ -1305,6 +1354,7 @@ static const struct ubus_method bss_methods[] = {
 	UBUS_METHOD_NOARG("rrm_nr_list", hostapd_rrm_nr_list),
 	UBUS_METHOD("rrm_nr_set", hostapd_rrm_nr_set, nr_set_policy),
 	UBUS_METHOD("rrm_beacon_req", hostapd_rrm_beacon_req, beacon_req_policy),
+	UBUS_METHOD_NOARG("ap_list", hostapd_ap_list),
 #ifdef CONFIG_WNM_AP
 	UBUS_METHOD("wnm_disassoc_imminent", hostapd_wnm_disassoc_imminent, wnm_disassoc_policy),
 #endif
