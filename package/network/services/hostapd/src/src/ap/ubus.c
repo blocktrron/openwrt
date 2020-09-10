@@ -9,7 +9,9 @@
 #include "utils/includes.h"
 #include "utils/common.h"
 #include "utils/eloop.h"
+#include "utils/list.h"
 #include "utils/wpabuf.h"
+#include "utils/os.h"
 #include "common/ieee802_11_defs.h"
 #include "hostapd.h"
 #include "neighbor_db.h"
@@ -1232,6 +1234,47 @@ hostapd_ap_list(struct ubus_context *ctx, struct ubus_object *obj,
 	return 0;
 }
 
+#ifdef NEED_AP_MLME
+static int
+hostapd_track_sta_list(struct ubus_context *ctx, struct ubus_object *obj,
+		       struct ubus_request_data *req, const char *method,
+		       struct blob_attr *msg)
+{
+	struct hostapd_data *hapd = get_hapd_from_object(obj);
+	struct hostapd_iface *iface = hapd->iface;
+	struct hostapd_sta_info *info;
+	struct os_reltime now;
+	char mac_buf[20];
+	void *list, *c;
+
+	sta_track_expire(iface, 0);
+
+	blob_buf_init(&b, 0);
+	list = blobmsg_open_table(&b, "stas");
+
+	os_get_reltime(&now);
+	dl_list_for_each_reverse(info, &iface->sta_seen,
+				 struct hostapd_sta_info, list) {
+		struct os_reltime age;
+		int ret;
+
+		os_reltime_sub(&now, &info->last_seen, &age);
+
+		sprintf(mac_buf, MACSTR, MAC2STR(info->addr));
+
+		c = blobmsg_open_table(&b, mac_buf);
+		blobmsg_add_u32(&b, "age", age.sec);
+		blobmsg_add_u32(&b, "rssi", info->ssi_signal);
+		blobmsg_close_table(&b, c);
+	}
+
+	blobmsg_close_table(&b, list);
+	ubus_send_reply(ctx, req, b.head);
+
+	return 0;
+}
+#endif
+
 
 #ifdef CONFIG_WNM_AP
 enum {
@@ -1355,6 +1398,9 @@ static const struct ubus_method bss_methods[] = {
 	UBUS_METHOD("rrm_nr_set", hostapd_rrm_nr_set, nr_set_policy),
 	UBUS_METHOD("rrm_beacon_req", hostapd_rrm_beacon_req, beacon_req_policy),
 	UBUS_METHOD_NOARG("ap_list", hostapd_ap_list),
+#ifdef NEED_AP_MLME
+	UBUS_METHOD_NOARG("track_sta_list", hostapd_track_sta_list),
+#endif
 #ifdef CONFIG_WNM_AP
 	UBUS_METHOD("wnm_disassoc_imminent", hostapd_wnm_disassoc_imminent, wnm_disassoc_policy),
 #endif
