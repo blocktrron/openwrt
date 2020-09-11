@@ -333,6 +333,9 @@ hostapd_common_add_bss_config() {
 	config_add_boolean multicast_to_unicast per_sta_vif
 
 	config_add_array hostapd_bss_options
+
+	config_add_int ap_table_max_num ap_table_max_age
+	config_add_int track_sta_max_num track_sta_max_age
 }
 
 hostapd_set_vlan_file() {
@@ -482,7 +485,9 @@ hostapd_set_bss_options() {
 		bss_load_update_period chan_util_avg_period sae_require_mfp \
 		multi_ap multi_ap_backhaul_ssid multi_ap_backhaul_key skip_inactivity_poll \
 		airtime_bss_weight airtime_bss_limit airtime_sta_weight \
-		multicast_to_unicast per_sta_vif
+		multicast_to_unicast per_sta_vif \
+		ap_table_max_num ap_table_max_age \
+		track_sta_max_num track_sta_max_age
 
 	set_default isolate 0
 	set_default maxassoc 0
@@ -529,6 +534,11 @@ hostapd_set_bss_options() {
 	append bss_conf "uapsd_advertisement_enabled=$uapsd" "$N"
 	append bss_conf "utf8_ssid=$utf8_ssid" "$N"
 	append bss_conf "multi_ap=$multi_ap" "$N"
+
+	[ -n "$ap_table_max_num" ] && append bss_conf "ap_table_max_size=$ap_table_max_num" "$N"
+	[ -n "$ap_table_max_age" ] && append bss_conf "ap_table_expiration_time=$ap_table_max_age" "$N"
+	[ -n "$track_sta_max_num" ] && append bss_conf "track_sta_max_num=$track_sta_max_num" "$N"
+	[ -n "$track_sta_max_age" ] && append bss_conf "track_sta_max_age=$track_sta_max_age" "$N"
 
 	[ "$tdls_prohibit" -gt 0 ] && append bss_conf "tdls_prohibit=$tdls_prohibit" "$N"
 
