@@ -1525,6 +1525,8 @@ int hostapd_ubus_handle_event(struct hostapd_data *hapd, struct hostapd_ubus_req
 	const char *type = "mgmt";
 	struct ubus_event_req ureq = {};
 	const u8 *addr;
+	char *ie_str;
+	int i;
 
 	if (req->mgmt_frame)
 		addr = req->mgmt_frame->sa;
@@ -1548,6 +1550,14 @@ int hostapd_ubus_handle_event(struct hostapd_data *hapd, struct hostapd_ubus_req
 	if (req->ssi_signal)
 		blobmsg_add_u32(&b, "signal", req->ssi_signal);
 	blobmsg_add_u32(&b, "freq", hapd->iface->freq);
+	
+	/* Add raw IEs */
+	if (req->raw_elems_len > 0) {
+		ie_str = blobmsg_alloc_string_buffer(&b, "raw_elements", req->raw_elems_len * 2 + 1);
+		for (i = 0; i < req->raw_elems_len; i++)
+			snprintf(&ie_str[i*2], 3, "%02X", req->raw_elems[i]);
+		blobmsg_add_string_buffer(&b);
+	}
 
 	if (req->elems) {
 		if(req->elems->ht_capabilities)

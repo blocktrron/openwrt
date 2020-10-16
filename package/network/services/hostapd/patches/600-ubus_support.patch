@@ -194,7 +194,17 @@
  
  	if (len < IEEE80211_HDRLEN)
  		return;
-@@ -996,6 +1002,12 @@ void handle_probe_req(struct hostapd_dat
+@@ -840,6 +846,9 @@ void handle_probe_req(struct hostapd_dat
+ 	if (!hapd->conf->send_probe_response)
+ 		return;
+ 
++	req.raw_elems = ie;
++	req.raw_elems_len = ie_len;
++
+ 	if (ieee802_11_parse_elems(ie, ie_len, &elems, 0) == ParseFailed) {
+ 		wpa_printf(MSG_DEBUG, "Could not parse ProbeReq from " MACSTR,
+ 			   MAC2STR(mgmt->sa));
+@@ -996,6 +1005,12 @@ void handle_probe_req(struct hostapd_dat
  	}
  #endif /* CONFIG_P2P */
  
