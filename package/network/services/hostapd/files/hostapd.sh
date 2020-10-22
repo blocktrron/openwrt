@@ -307,6 +307,8 @@ hostapd_common_add_bss_config() {
 	config_add_array basic_rate
 	config_add_array supported_rates
 
+	config_add_array vendor_element
+
 	config_add_boolean sae_require_mfp
 
 	config_add_string 'owe_transition_bssid:macaddr' 'owe_transition_ssid:string'
@@ -369,6 +371,14 @@ hostapd_set_psk() {
 
 	rm -f /var/run/hostapd-${ifname}.psk
 	for_each_station hostapd_set_psk_file ${ifname}
+}
+
+append_vendor_element() {
+	if [ -z "$vendor_elements" ]; then
+		vendor_elements="$1"
+	else
+		vendor_elements="$vendor_elements$1"
+	fi
 }
 
 append_iw_roaming_consortium() {
@@ -968,6 +978,11 @@ hostapd_set_bss_options() {
 	for val in $opts; do
 		append bss_conf "$val" "$N"
 	done
+
+	json_get_vars vendor_element
+	vendor_elements=
+	json_for_each_item append_vendor_element vendor_element
+	[ -n "$vendor_elements" ] && append bss_conf "vendor_elements=$vendor_elements" "$N"
 
 	bss_md5sum=$(echo $bss_conf | md5sum | cut -d" " -f1)
 	append bss_conf "config_id=$bss_md5sum" "$N"
