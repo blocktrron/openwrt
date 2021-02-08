@@ -237,8 +237,8 @@
 	usb_phy0: usb-phy {
 		compatible = "qca,qca9560-usb-phy", "qca,ar7200-usb-phy";
 
-		reset-names = "usb-phy", "usb-suspend-override";
-		resets = <&rst 4>, <&rst 3>;
+		reset-names = "usb-phy-analog", "usb-phy", "usb-suspend-override";
+		resets = <&rst 11>, <&rst 4>, <&rst 3>;
 
 		#phy-cells = <0>;
 
@@ -248,8 +248,8 @@
 	usb_phy1: usb-phy {
 		compatible = "qca,qca9560-usb-phy", "qca,ar7200-usb-phy";
 
-		reset-names = "usb-phy", "usb-suspend-override";
-		resets = <&rst2 4>, <&rst2 3>;
+		reset-names = "usb-phy-analog", "usb-phy", "usb-suspend-override";
+		resets = <&rst2 11>, <&rst2 4>, <&rst2 3>;
 
 		#phy-cells = <0>;
 
