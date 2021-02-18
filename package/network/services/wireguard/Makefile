@@ -12,7 +12,7 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=wireguard
 
 PKG_VERSION:=1.0.20201112
-PKG_RELEASE:=1
+PKG_RELEASE:=2
 
 PKG_SOURCE:=wireguard-linux-compat-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://git.zx2c4.com/wireguard-linux-compat/snapshot/
@@ -50,7 +50,7 @@ endef
 define Package/wireguard
   $(call Package/wireguard/Default)
   TITLE:=WireGuard meta-package
-  DEPENDS:=+wireguard-tools +kmod-wireguard
+  DEPENDS:=+wireguard-tools @LINUX_5_4
 endef
 
 include $(INCLUDE_DIR)/kernel-defaults.mk
@@ -68,21 +68,21 @@ define Package/wireguard/description
   $(call Package/wireguard/Default/description)
 endef
 
-define KernelPackage/wireguard
+define KernelPackage/wireguard-oot
   SECTION:=kernel
   CATEGORY:=Kernel modules
   SUBMENU:=Network Support
   TITLE:=WireGuard kernel module
-  DEPENDS:=+IPV6:kmod-udptunnel6 +kmod-udptunnel4
+  DEPENDS:=+IPV6:kmod-udptunnel6 +kmod-udptunnel4 @LINUX_5_4
   FILES:= $(PKG_BUILD_DIR)/src/wireguard.$(LINUX_KMOD_SUFFIX)
   AUTOLOAD:=$(call AutoProbe,wireguard)
 endef
 
-define KernelPackage/wireguard/description
+define KernelPackage/wireguard-oot/description
   $(call Package/wireguard/Default/description)
 
   This package provides the kernel module for WireGuard.
 endef
 
 $(eval $(call BuildPackage,wireguard))
-$(eval $(call KernelPackage,wireguard))
+$(eval $(call KernelPackage,wireguard-oot))

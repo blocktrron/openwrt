@@ -12,7 +12,7 @@ include $(INCLUDE_DIR)/kernel.mk
 PKG_NAME:=wireguard-tools
 
 PKG_VERSION:=1.0.20200827
-PKG_RELEASE:=2
+PKG_RELEASE:=3
 
 PKG_SOURCE:=wireguard-tools-$(PKG_VERSION).tar.xz
 PKG_SOURCE_URL:=https://git.zx2c4.com/wireguard-tools/snapshot/
@@ -36,7 +36,9 @@ define Package/wireguard-tools
   URL:=https://www.wireguard.com
   MAINTAINER:=Jason A. Donenfeld <Jason@zx2c4.com>
   TITLE:=WireGuard userspace control program (wg)
-  DEPENDS:=+@BUSYBOX_CONFIG_IP +@BUSYBOX_CONFIG_FEATURE_IP_LINK
+  DEPENDS:=+@BUSYBOX_CONFIG_IP +@BUSYBOX_CONFIG_FEATURE_IP_LINK \
+	  +LINUX_5_4:kmod-wireguard-oot \
+	  +!LINUX_5_4:kmod-wireguard
 endef
 
 define Package/wireguard-tools/description
