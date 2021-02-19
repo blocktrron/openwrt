@@ -79,6 +79,8 @@ define KernelPackage/crypto-blake2s
   TITLE:=BLAKE2s digest algorithm CryptoAPI module
   KCONFIG:= \
 	CONFIG_CRYPTO_BLAKE2S \
+	CONFIG_CRYPTO_LIB_BLAKE2S \
+	CONFIG_CRYPTO_LIB_BLAKE2S_GENERIC \
 	CONFIG_CRYPTO_BLAKE2S_X86 \
 	CONFIG_CRYPTO_BLAKE2S_ARM
   FILES:= \
@@ -86,7 +88,7 @@ define KernelPackage/crypto-blake2s
 	$(LINUX_DIR)/lib/crypto/libblake2s-generic.ko \
 	$(LINUX_DIR)/lib/crypto/libblake2s.ko
   AUTOLOAD:=$(call AutoLoad,09,blake2s-generic)
-  $(call AddDepends/crypto, @!LINUX_5_4)
+  $(call AddDepends/crypto, @!LINUX_5_4 +kmod-crypto-hash)
 endef
 
 define KernelPackage/crypto-blake2s/x86/64
@@ -134,6 +136,7 @@ define KernelPackage/crypto-chacha20poly1305
   TITLE:=ChaCha20 and Poly1305 CryptoAPI modules
   KCONFIG:= \
 	CONFIG_CRYPTO_CHACHA20POLY1305 \
+	CONFIG_CRYPTO_LIB_CHACHA20POLY1305 \
 	CONFIG_CRYPTO_CHACHA20_X86_64 \
 	CONFIG_CRYPTO_POLY1305_X86_64 \
 	CONFIG_CRYPTO_CHAHA20_NEON \
@@ -188,6 +191,7 @@ define KernelPackage/crypto-chacha20poly1305/mips
 	$(call AutoLoad,09,chacha-mips)
 endef
 
+KernelPackage/crypto-chacha20poly1305/ath79=$(KernelPackage/crypto-chacha20poly1305/mips)
 KernelPackage/crypto-chacha20poly1305/ramips=$(KernelPackage/crypto-chacha20poly1305/mips)
 
 $(eval $(call KernelPackage,crypto-chacha20poly1305))
@@ -258,6 +262,7 @@ define KernelPackage/crypto-curve25519
   TITLE:=Curve 25519 CryptoAPI module
   KCONFIG:= \
 	CONFIG_CRYPTO_CURVE25519 \
+	CONFIG_CRYPTO_LIB_CURVE25519_GENERIC \
 	CONFIG_CRYPTO_CURVE25519_X86 \
 	CONFIG_CRYPTO_CURVE25519_NEON
   FILES:= \
@@ -931,6 +936,7 @@ define KernelPackage/crypto-user
   KCONFIG:= \
 	CONFIG_CRYPTO_USER \
 	CONFIG_CRYPTO_USER_API \
+	CONFIG_CRYPTO_USER_API_ENABLE_OBSOLETE=y \
 	CONFIG_CRYPTO_USER_API_AEAD \
 	CONFIG_CRYPTO_USER_API_HASH \
 	CONFIG_CRYPTO_USER_API_RNG \

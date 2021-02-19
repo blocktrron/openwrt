@@ -1325,7 +1325,7 @@ define KernelPackage/usb-net-rtl8152
   KCONFIG:=CONFIG_USB_RTL8152
   FILES:=$(LINUX_DIR)/drivers/$(USBNET_DIR)/r8152.ko
   AUTOLOAD:=$(call AutoProbe,r8152)
-  $(call AddDepends/usb-net)
+  $(call AddDepends/usb-net,+!LINUX_5_4:kmod-crypto-hash)
 endef
 
 define KernelPackage/usb-net-rtl8152/description
@@ -1617,6 +1617,7 @@ define KernelPackage/usb-chipidea2
   KCONFIG:= \
 	CONFIG_EXTCON \
 	CONFIG_USB_CHIPIDEA \
+	CONFIG_USB_CHIPIDEA_GENERIC \
 	CONFIG_USB_CHIPIDEA_HOST=y \
 	CONFIG_USB_CHIPIDEA_UDC=y \
 	CONFIG_USB_CHIPIDEA_DEBUG=y
