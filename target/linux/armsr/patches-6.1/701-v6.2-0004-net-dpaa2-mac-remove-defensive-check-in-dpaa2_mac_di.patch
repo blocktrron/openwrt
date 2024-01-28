@@ -38,7 +38,7 @@ Signed-off-by: Paolo Abeni <pabeni@redhat.com>
 
 --- a/drivers/net/ethernet/freescale/dpaa2/dpaa2-mac.c
 +++ b/drivers/net/ethernet/freescale/dpaa2/dpaa2-mac.c
-@@ -446,9 +446,6 @@ err_pcs_destroy:
+@@ -445,9 +445,6 @@ err_pcs_destroy:
  
  void dpaa2_mac_disconnect(struct dpaa2_mac *mac)
  {

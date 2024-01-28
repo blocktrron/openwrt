@@ -43,7 +43,7 @@ Signed-off-by: Paolo Abeni <pabeni@redhat.com>
  		netif_tx_stop_all_queues(net_dev);
 --- a/drivers/net/ethernet/freescale/dpaa2/dpaa2-mac.c
 +++ b/drivers/net/ethernet/freescale/dpaa2/dpaa2-mac.c
-@@ -336,12 +336,20 @@ static void dpaa2_mac_set_supported_inte
+@@ -335,12 +335,20 @@ static void dpaa2_mac_set_supported_inte
  
  void dpaa2_mac_start(struct dpaa2_mac *mac)
  {

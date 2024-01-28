@@ -20,7 +20,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
 
 --- a/drivers/net/phy/phy_device.c
 +++ b/drivers/net/phy/phy_device.c
-@@ -2937,11 +2937,18 @@ static bool phy_drv_supports_irq(struct
+@@ -2935,11 +2935,18 @@ static bool phy_drv_supports_irq(struct
  	return phydrv->config_intr && phydrv->handle_interrupt;
  }
  
@@ -41,7 +41,7 @@ Signed-off-by: David S. Miller <davem@davemloft.net>
  }
  
  static int of_phy_led(struct phy_device *phydev,
-@@ -2958,12 +2965,14 @@ static int of_phy_led(struct phy_device
+@@ -2956,12 +2963,14 @@ static int of_phy_led(struct phy_device
  		return -ENOMEM;
  
  	cdev = &phyled->led_cdev;
