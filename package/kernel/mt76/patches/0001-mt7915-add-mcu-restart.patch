@@ -1,0 +1,35 @@
+From d21a4fa3f11b2b3927043925d62ef9e6b0ba956d Mon Sep 17 00:00:00 2001
+From: David Bauer <mail@david-bauer.net>
+Date: Fri, 24 May 2024 17:31:45 +0200
+Subject: [PATCH 1/2] mt7915: add mcu restart
+
+---
+ mt7915/mac.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/mt7915/mac.c b/mt7915/mac.c
+index 8008ce3f..5dbbcbac 100644
+--- a/mt7915/mac.c
++++ b/mt7915/mac.c
+@@ -1395,6 +1395,18 @@ mt7915_mac_restart(struct mt7915_dev *dev)
+ 		}
+ 	}
+ 
++	/* Add code from MCU exit */
++	mt76_connac_mcu_restart(&dev->mt76);
++	if (mt7915_firmware_state(dev, false)) {
++		dev_err(dev->mt76.dev, "Failed to exit mcu\n");
++		//goto out;
++	}
++
++	mt76_wr(dev, MT_TOP_LPCR_HOST_BAND(0), MT_TOP_LPCR_HOST_FW_OWN);
++	if (dev->hif2)
++		mt76_wr(dev, MT_TOP_LPCR_HOST_BAND(1),
++			MT_TOP_LPCR_HOST_FW_OWN);
++
+ 	/* load firmware */
+ 	ret = mt7915_mcu_init_firmware(dev);
+ 	if (ret)
+-- 
+2.43.0
+

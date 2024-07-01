@@ -1,0 +1,163 @@
+From 3d277d5f520ac74e449014c655349a119218595a Mon Sep 17 00:00:00 2001
+From: David Bauer <mail@david-bauer.net>
+Date: Mon, 1 Jul 2024 02:30:04 +0200
+Subject: [PATCH 2/2] debug
+
+---
+ mt7915/dma.c    | 64 +++++++++++++++++++++++++++++++++++++++++++++++++
+ mt7915/init.c   | 19 +++++++++++++++
+ mt7915/mt7915.h |  7 ++++++
+ 3 files changed, 90 insertions(+)
+
+diff --git a/mt7915/dma.c b/mt7915/dma.c
+index 0baa82c8..87354900 100644
+--- a/mt7915/dma.c
++++ b/mt7915/dma.c
+@@ -5,6 +5,66 @@
+ #include "../dma.h"
+ #include "mac.h"
+ 
++
++static int mt7915_dump_all_regs(struct mt7915_dev *dev)
++{
++	u32 hif1_ofs = 0;
++	if (dev->hif2)
++		hif1_ofs = MT_WFDMA0_PCIE1(0) - MT_WFDMA0(0);
++
++	dev_warn(dev->mt76.dev, "MISC\n");
++	mt7915_print_reg(dev, MT_INT1_MASK_CSR);
++	mt7915_print_reg(dev, MT_INT1_SOURCE_CSR);
++	mt7915_print_reg(dev, MT_PCIE_MAC_INT_ENABLE);
++	mt7915_print_reg(dev, MT_PCIE1_MAC_INT_ENABLE);
++	mt7915_print_reg(dev, MT_TOP_MISC);
++	mt7915_print_reg(dev, MT_WFDMA0_EXT0_CFG);
++	mt7915_print_reg(dev, MT_WFDMA_HOST_CONFIG);
++	mt7915_print_reg(dev, MT_INT_WED_MASK_CSR);
++	mt7915_print_reg(dev, MT_INT_MASK_CSR);
++	mt7915_print_reg(dev, MT_WFDMA0_MCU_HOST_INT_ENA);
++	mt7915_print_reg(dev, MT_MCU_INT_EVENT);
++
++	dev_warn(dev->mt76.dev, "DMA_DISABLE\n");
++	mt7915_print_reg(dev, MT_WFDMA0_RST);
++	mt7915_print_reg(dev, MT_WFDMA1_RST);
++	mt7915_print_reg(dev, MT_WFDMA0_RST + hif1_ofs);
++	mt7915_print_reg(dev, MT_WFDMA1_RST + hif1_ofs);
++	mt7915_print_reg(dev, MT_WFDMA0_GLO_CFG);
++	mt7915_print_reg(dev, MT_WFDMA1_GLO_CFG);
++	mt7915_print_reg(dev, MT_WFDMA0_GLO_CFG + hif1_ofs);
++	mt7915_print_reg(dev, MT_WFDMA1_GLO_CFG + hif1_ofs);
++
++
++	dev_warn(dev->mt76.dev, "DMA_ENABLE\n");
++	dev_warn(dev->mt76.dev, " -- RST_DTX_PTR\n");
++	mt7915_print_reg(dev, MT_WFDMA0_RST_DTX_PTR);
++	mt7915_print_reg(dev, MT_WFDMA1_RST_DTX_PTR);
++	mt7915_print_reg(dev, MT_WFDMA0_RST_DTX_PTR + hif1_ofs);
++	mt7915_print_reg(dev, MT_WFDMA1_RST_DTX_PTR + hif1_ofs);
++
++	dev_warn(dev->mt76.dev, " -- PRI_DELAY_INT\n");
++	mt7915_print_reg(dev, MT_WFDMA0_PRI_DLY_INT_CFG0);
++	mt7915_print_reg(dev, MT_WFDMA1_PRI_DLY_INT_CFG0);
++	mt7915_print_reg(dev, MT_WFDMA0_PRI_DLY_INT_CFG1);
++	mt7915_print_reg(dev, MT_WFDMA0_PRI_DLY_INT_CFG2);
++	mt7915_print_reg(dev, MT_WFDMA0_PRI_DLY_INT_CFG0 + hif1_ofs);
++	mt7915_print_reg(dev, MT_WFDMA1_PRI_DLY_INT_CFG0 + hif1_ofs);
++	mt7915_print_reg(dev, MT_WFDMA0_PRI_DLY_INT_CFG1 + hif1_ofs);
++	mt7915_print_reg(dev, MT_WFDMA0_PRI_DLY_INT_CFG2 + hif1_ofs);
++
++	mt7915_print_reg(dev, MT_WFDMA0_BUSY_ENA);
++	mt7915_print_reg(dev, MT_WFDMA1_BUSY_ENA);
++	mt7915_print_reg(dev, MT_WFDMA0_BUSY_ENA + hif1_ofs);
++	mt7915_print_reg(dev, MT_WFDMA1_BUSY_ENA + hif1_ofs);
++
++	mt7915_print_reg(dev, MT_WFDMA0_GLO_CFG);
++
++	dev_warn(dev->mt76.dev, "DMA_INIT\n");
++	mt7915_print_reg(dev, MT_WFDMA_HOST_CONFIG);
++	return 0;
++}
++
+ static int
+ mt7915_init_tx_queues(struct mt7915_phy *phy, int idx, int n_desc, int ring_base)
+ {
+@@ -328,6 +388,8 @@ int mt7915_dma_start(struct mt7915_dev *dev, bool reset, bool wed_reset)
+ 	mt7915_irq_enable(dev, irq_mask);
+ 	mt7915_irq_disable(dev, 0);
+ 
++	mt7915_dump_all_regs(dev);
++
+ 	return 0;
+ }
+ 
+@@ -412,6 +474,8 @@ int mt7915_dma_init(struct mt7915_dev *dev, struct mt7915_phy *phy2)
+ 	u32 hif1_ofs = 0;
+ 	int ret;
+ 
++	mt7915_dump_all_regs(dev);
++
+ 	mt7915_dma_config(dev);
+ 
+ 	mt76_dma_attach(&dev->mt76);
+diff --git a/mt7915/init.c b/mt7915/init.c
+index eee18798..bdbe9ccd 100644
+--- a/mt7915/init.c
++++ b/mt7915/init.c
+@@ -523,6 +523,18 @@ mt7915_mac_init_band(struct mt7915_dev *dev, u8 band)
+ 	      FIELD_PREP(MT_WTBLOFF_TOP_RSCR_RCPI_PARAM, 0x3);
+ 	mt76_rmw(dev, MT_WTBLOFF_TOP_RSCR(band), mask, set);
+ 
++	dev_warn(dev->mt76.dev, "MAC_INIT_BAND%d\n", band);
++	mt7915_print_reg(dev, MT_TMAC_CTCR0(band));
++	mt7915_print_reg(dev, MT_MDP_BNRCFR0(band));
++	mt7915_print_reg(dev, MT_MDP_BNRCFR1(band));
++	mt7915_print_reg(dev, MT_DMA_DCR0(band));
++	mt7915_print_reg(dev, MT_WF_RMAC_RSVD0(band));
++	mt7915_print_reg(dev, MT_WF_RMAC_MIB_AIRTIME0(band));
++	mt7915_print_reg(dev, MT_WF_RMAC_MIB_AIRTIME1(band));
++	mt7915_print_reg(dev, MT_WF_RMAC_MIB_AIRTIME3(band));
++	mt7915_print_reg(dev, MT_WF_RMAC_MIB_AIRTIME4(band));
++	mt7915_print_reg(dev, MT_WTBLOFF_TOP_RSCR(band));
++	
+ 	/* MT_TXD5_TX_STATUS_HOST (MPDU format) has higher priority than
+ 	 * MT_AGG_ACR_PPDU_TXS2H (PPDU format) even though ACR bit is set.
+ 	 */
+@@ -622,6 +634,13 @@ void mt7915_mac_init(struct mt7915_dev *dev)
+ 	for (i = 0; i < 2; i++)
+ 		mt7915_mac_init_band(dev, i);
+ 
++	dev_warn(dev->mt76.dev, "MAC_INIT\n");
++	mt7915_print_reg(dev, MT_WF_PP_TOP_RXQ_WFDMA_CF_5);
++	mt7915_print_reg(dev, MT_MDP_DCR0);
++	mt7915_print_reg(dev, MT_MDP_DCR1);
++	mt7915_print_reg(dev, MT_MDP_DCR2);
++	mt7915_print_reg(dev, MT_PLE_HOST_RPT0);
++
+ 	mt7915_init_led_mux(dev);
+ }
+ 
+diff --git a/mt7915/mt7915.h b/mt7915/mt7915.h
+index a30d08eb..48609d9d 100644
+--- a/mt7915/mt7915.h
++++ b/mt7915/mt7915.h
+@@ -589,6 +589,7 @@ void mt7915_update_channel(struct mt76_phy *mphy);
+ int mt7915_mcu_muru_debug_set(struct mt7915_dev *dev, bool enable);
+ int mt7915_mcu_muru_debug_get(struct mt7915_phy *phy);
+ int mt7915_mcu_wed_enable_rx_stats(struct mt7915_dev *dev);
++int mt7915_firmware_state(struct mt7915_dev *dev, bool wa);
+ int mt7915_init_debugfs(struct mt7915_phy *phy);
+ void mt7915_debugfs_rx_fw_monitor(struct mt7915_dev *dev, const void *data, int len);
+ bool mt7915_debugfs_rx_log(struct mt7915_dev *dev, const void *data, int len);
+@@ -599,4 +600,10 @@ void mt7915_sta_add_debugfs(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+ int mt7915_mmio_wed_init(struct mt7915_dev *dev, void *pdev_ptr,
+ 			 bool pci, int *irq);
+ 
++static inline int mt7915_print_reg(struct mt7915_dev *dev, u32 reg)
++{
++	dev_warn(dev->mt76.dev, "reg:0x%08x val:0x%08x\n", reg, mt76_rr(dev, reg));
++	return 0;
++}
++
+ #endif
+-- 
+2.43.0
+
