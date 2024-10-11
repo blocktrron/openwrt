@@ -21,6 +21,7 @@
 #include "beacon.h"
 #include "rrm.h"
 #include "wnm_ap.h"
+#include "wpa_auth.h"
 #include "taxonomy.h"
 #include "airtime_policy.h"
 #include "hw_features.h"
@@ -244,6 +245,8 @@ hostapd_bss_get_clients(struct ubus_context *ctx, struct ubus_object *obj,
 	struct hostap_sta_driver_data sta_driver_data;
 	struct sta_info *sta;
 	void *list, *c;
+	char *str;
+	const u8 *psk;
 	char mac_buf[20];
 	static const struct {
 		const char *name;
@@ -292,6 +295,15 @@ hostapd_bss_get_clients(struct ubus_context *ctx, struct ubus_object *obj,
 			}
 		}
 		blobmsg_close_array(&b, r);
+
+		psk = ap_sta_wpa_get_key_plain(hapd, sta);
+		if (psk) {
+			str = blobmsg_alloc_string_buffer(&b, "psk", 64 + 1);
+			if (str) {
+				os_snprintf(str, 64 + 1, "%s", psk);
+				blobmsg_add_string_buffer(&b);
+			}
+		}
 
 		blobmsg_add_u32(&b, "aid", sta->aid);
 #ifdef CONFIG_TAXONOMY
