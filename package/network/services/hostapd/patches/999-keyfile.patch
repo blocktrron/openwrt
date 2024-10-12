@@ -1,0 +1,100 @@
+From 3ad9a1b5af4ace6f1ed3f7d112c95cdd3d1fe488 Mon Sep 17 00:00:00 2001
+From: David Bauer <mail@david-bauer.net>
+Date: Sat, 12 Oct 2024 04:03:23 +0200
+Subject: [PATCH] ap: add plain key to PSK info
+
+---
+ src/ap/ap_config.c |  4 ++++
+ src/ap/ap_config.h |  3 +++
+ src/ap/sta_info.c  | 25 +++++++++++++++++++++++++
+ src/ap/sta_info.h  |  2 ++
+ 4 files changed, 34 insertions(+)
+
+diff --git a/src/ap/ap_config.c b/src/ap/ap_config.c
+index 160809a27..465d1c179 100644
+--- a/src/ap/ap_config.c
++++ b/src/ap/ap_config.c
+@@ -438,6 +438,8 @@ static int hostapd_config_read_wpa_psk(const char *fname,
+ 			break;
+ 		}
+ 
++		os_memcpy(psk->plain, pos, len);
++
+ 		if (keyid) {
+ 			len = os_strlcpy(psk->keyid, keyid, sizeof(psk->keyid));
+ 			if ((size_t) len >= sizeof(psk->keyid)) {
+@@ -482,6 +484,8 @@ static int hostapd_derive_psk(struct hostapd_ssid *ssid)
+ 	}
+ 	wpa_hexdump_key(MSG_DEBUG, "PSK (from passphrase)",
+ 			ssid->wpa_psk->psk, PMK_LEN);
++
++	os_memcpy(ssid->wpa_psk->plain, ssid->wpa_passphrase, os_strlen(ssid->wpa_passphrase));
+ 	return 0;
+ }
+ 
+diff --git a/src/ap/ap_config.h b/src/ap/ap_config.h
+index d42076785..e0fef6a97 100644
+--- a/src/ap/ap_config.h
++++ b/src/ap/ap_config.h
+@@ -169,6 +169,9 @@ struct hostapd_wpa_psk {
+ 	u8 psk[PMK_LEN];
+ 	u8 addr[ETH_ALEN];
+ 	u8 p2p_dev_addr[ETH_ALEN];
++
++	u8 plain[64];
++
+ 	int vlan_id;
+ };
+ 
+diff --git a/src/ap/sta_info.c b/src/ap/sta_info.c
+index 13613dbab..3f9554bec 100644
+--- a/src/ap/sta_info.c
++++ b/src/ap/sta_info.c
+@@ -1460,6 +1460,31 @@ const char * ap_sta_wpa_get_keyid(struct hostapd_data *hapd,
+ 	return psk->keyid;
+ }
+ 
++const char * ap_sta_wpa_get_key_plain(struct hostapd_data *hapd,
++				      struct sta_info *sta)
++{
++	struct hostapd_wpa_psk *psk;
++	struct hostapd_ssid *ssid;
++	const u8 *pmk;
++	int pmk_len;
++
++	ssid = &hapd->conf->ssid;
++
++	pmk = wpa_auth_get_pmk(sta->wpa_sm, &pmk_len);
++	if (!pmk || pmk_len != PMK_LEN)
++		return NULL;
++
++	for (psk = ssid->wpa_psk; psk; psk = psk->next)
++		if (os_memcmp(pmk, psk->psk, PMK_LEN) == 0)
++			break;
++	if (!psk)
++		return NULL;
++
++	if (psk->plain[0] == '\0')
++		return NULL;
++
++	return psk->plain;
++}
+ 
+ const u8 * ap_sta_wpa_get_dpp_pkhash(struct hostapd_data *hapd,
+ 				     struct sta_info *sta)
+diff --git a/src/ap/sta_info.h b/src/ap/sta_info.h
+index 5b01c1e6f..2a0475c6e 100644
+--- a/src/ap/sta_info.h
++++ b/src/ap/sta_info.h
+@@ -377,6 +377,8 @@ void ap_sta_stop_sa_query(struct hostapd_data *hapd, struct sta_info *sta);
+ int ap_check_sa_query_timeout(struct hostapd_data *hapd, struct sta_info *sta);
+ const char * ap_sta_wpa_get_keyid(struct hostapd_data *hapd,
+ 				  struct sta_info *sta);
++const char * ap_sta_wpa_get_key_plain(struct hostapd_data *hapd,
++				      struct sta_info *sta);
+ const u8 * ap_sta_wpa_get_dpp_pkhash(struct hostapd_data *hapd,
+ 				     struct sta_info *sta);
+ void ap_sta_disconnect(struct hostapd_data *hapd, struct sta_info *sta,
+-- 
+2.45.2
+
