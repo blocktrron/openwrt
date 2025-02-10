@@ -1,0 +1,31 @@
+From f8108728ee64219e93b12cf4c9ca4c58d97dd82e Mon Sep 17 00:00:00 2001
+From: David Bauer <mail@david-bauer.net>
+Date: Mon, 10 Feb 2025 04:53:51 +0100
+Subject: [PATCH 785/786] net: qualcomm: rmnet: account for v5 headroom
+
+In case checksum header 5 is used, the headroom was not accounted for
+correctly.
+
+Add the specific case to rmnet_vnd_headroom.
+
+Signed-off-by: David Bauer <mail@david-bauer.net>
+---
+ drivers/net/ethernet/qualcomm/rmnet/rmnet_vnd.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/net/ethernet/qualcomm/rmnet/rmnet_vnd.c b/drivers/net/ethernet/qualcomm/rmnet/rmnet_vnd.c
+index 4f0ddcedfa97..850ea02b4713 100644
+--- a/drivers/net/ethernet/qualcomm/rmnet/rmnet_vnd.c
++++ b/drivers/net/ethernet/qualcomm/rmnet/rmnet_vnd.c
+@@ -72,6 +72,8 @@ static int rmnet_vnd_headroom(struct rmnet_port *port)
+ 
+ 	if (port->data_format & RMNET_FLAGS_EGRESS_MAP_CKSUMV4)
+ 		headroom += sizeof(struct rmnet_map_ul_csum_header);
++	else if (port->data_format & RMNET_FLAGS_EGRESS_MAP_CKSUMV5)
++		headroom += sizeof(struct rmnet_map_v5_csum_header);
+ 
+ 	return headroom;
+ }
+-- 
+2.47.2
+

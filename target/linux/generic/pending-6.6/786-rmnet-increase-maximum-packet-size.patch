@@ -1,0 +1,60 @@
+From 418057fda1b2b994eaef61d9136c5fc95c32fa96 Mon Sep 17 00:00:00 2001
+From: David Bauer <mail@david-bauer.net>
+Date: Mon, 10 Feb 2025 05:01:59 +0100
+Subject: [PATCH 786/786] rmnet: increase maximum packet size
+
+On modern Qualcomm 5G platforms, the maximum aggregated packet size can
+be 31k.
+
+Allo configuring rmnet interfaces on parent interfaces with an MTU of
+31744 when the v5 protocol is used in downlink direction.
+
+Signed-off-by: David Bauer <mail@david-bauer.net>
+---
+ drivers/net/ethernet/qualcomm/rmnet/rmnet_private.h |  1 +
+ drivers/net/ethernet/qualcomm/rmnet/rmnet_vnd.c     | 10 +++++++++-
+ 2 files changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/net/ethernet/qualcomm/rmnet/rmnet_private.h b/drivers/net/ethernet/qualcomm/rmnet/rmnet_private.h
+index e1337f164faa..874a0b7caf5b 100644
+--- a/drivers/net/ethernet/qualcomm/rmnet/rmnet_private.h
++++ b/drivers/net/ethernet/qualcomm/rmnet/rmnet_private.h
+@@ -6,6 +6,7 @@
+ #define _RMNET_PRIVATE_H_
+ 
+ #define RMNET_MAX_PACKET_SIZE      16384
++#define RMNET_MAX_PACKET_SIZE_V5   31744
+ #define RMNET_DFLT_PACKET_SIZE     1500
+ #define RMNET_NEEDED_HEADROOM      16
+ #define RMNET_TX_QUEUE_LEN         1000
+diff --git a/drivers/net/ethernet/qualcomm/rmnet/rmnet_vnd.c b/drivers/net/ethernet/qualcomm/rmnet/rmnet_vnd.c
+index 850ea02b4713..533c36f1a2d3 100644
+--- a/drivers/net/ethernet/qualcomm/rmnet/rmnet_vnd.c
++++ b/drivers/net/ethernet/qualcomm/rmnet/rmnet_vnd.c
+@@ -78,6 +78,14 @@ static int rmnet_vnd_headroom(struct rmnet_port *port)
+ 	return headroom;
+ }
+ 
++static int rmnet_vnd_max_packet_size(struct rmnet_port *port)
++{
++	if (port->data_format & RMNET_FLAGS_INGRESS_MAP_CKSUMV5)
++		return RMNET_MAX_PACKET_SIZE_V5;
++
++	return RMNET_MAX_PACKET_SIZE;
++}
++
+ static int rmnet_vnd_change_mtu(struct net_device *rmnet_dev, int new_mtu)
+ {
+ 	struct rmnet_priv *priv = netdev_priv(rmnet_dev);
+@@ -88,7 +96,7 @@ static int rmnet_vnd_change_mtu(struct net_device *rmnet_dev, int new_mtu)
+ 
+ 	headroom = rmnet_vnd_headroom(port);
+ 
+-	if (new_mtu < 0 || new_mtu > RMNET_MAX_PACKET_SIZE ||
++	if (new_mtu < 0 || new_mtu > rmnet_vnd_max_packet_size(port) ||
+ 	    new_mtu > (priv->real_dev->mtu - headroom))
+ 		return -EINVAL;
+ 
+-- 
+2.47.2
+
