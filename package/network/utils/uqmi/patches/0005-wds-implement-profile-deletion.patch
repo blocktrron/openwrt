@@ -1,0 +1,67 @@
+From 744fdffce73ab32eaeb41a0f396a203c878aa9f9 Mon Sep 17 00:00:00 2001
+From: David Bauer <mail@david-bauer.net>
+Date: Thu, 13 Feb 2025 02:19:27 +0100
+Subject: [PATCH 5/8] wds: implement profile deletion
+
+---
+ uqmi/commands-wds.c | 26 ++++++++++++++++++++++++++
+ uqmi/commands-wds.h |  2 ++
+ 2 files changed, 28 insertions(+)
+
+diff --git a/uqmi/commands-wds.c b/uqmi/commands-wds.c
+index a50d254..f57f126 100644
+--- a/uqmi/commands-wds.c
++++ b/uqmi/commands-wds.c
+@@ -648,3 +648,29 @@ cmd_wds_get_default_profile_cb(struct qmi_dev *qmi, struct qmi_request *req, str
+ 
+ 	blobmsg_close_table(&status, p);
+ }
++
++#define cmd_wds_delete_profile_cb no_cb
++
++static enum qmi_cmd_result
++cmd_wds_delete_profile_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
++{
++	struct qmi_wds_delete_profile_request delete_req = {
++		QMI_INIT_SEQUENCE(profile_identifier,
++			.profile_type = QMI_WDS_PROFILE_TYPE_3GPP,
++			.profile_index = 1,
++		)
++	};
++	struct uqmi_wds_profile_identifier profile;
++
++	if (uqmi_wds_profile_identifier_parse(arg, &profile) < 0) {
++		fprintf(stderr, "Invalid argument\n");
++		return QMI_CMD_EXIT;
++	}
++
++	qmi_set_ptr(&delete_req, profile_identifier.profile_type, profile.type);
++	qmi_set_ptr(&delete_req, profile_identifier.profile_index, profile.index);
++
++	qmi_set_wds_delete_profile_request(msg, &delete_req);
++
++	return QMI_CMD_REQUEST;
++}
+diff --git a/uqmi/commands-wds.h b/uqmi/commands-wds.h
+index f259fea..043cc64 100644
+--- a/uqmi/commands-wds.h
++++ b/uqmi/commands-wds.h
+@@ -37,6 +37,7 @@
+ 	__uqmi_command(wds_get_default_profile, get-default-profile, required, QMI_SERVICE_WDS), \
+ 	__uqmi_command(wds_create_profile, create-profile, required, QMI_SERVICE_WDS), \
+ 	__uqmi_command(wds_modify_profile, modify-profile, required, QMI_SERVICE_WDS), \
++	__uqmi_command(wds_delete_profile, delete-profile, required, QMI_SERVICE_WDS), \
+ 	__uqmi_command(wds_set_pdp_type, pdp-type, required, CMD_TYPE_OPTION), \
+ 	__uqmi_command(wds_no_roaming, no-roaming, required, CMD_TYPE_OPTION), \
+ 	__uqmi_command(wds_get_current_settings, get-current-settings, no, QMI_SERVICE_WDS), \
+@@ -75,6 +76,7 @@
+ 		"    --password <password>:          Use network password\n" \
+ 		"    --auth-type pap|chap|both|none: Use network authentication type\n" \
+ 		"    --no-roaming false|true         To allow roaming, set to false\n" \
++		"  --delete-profile <val>,#:         Delete profile number (3gpp, 3gpp2)\n" \
+ 		"  --get-current-settings:           Get current connection settings\n" \
+ 		"  --bind-mux <id>:		     Bind data session to QMUX multiplex (use with options below)\n" \
+ 		"    --endpoint-type <type>:	     Set endpoint interface type (hsusb, pcie)\n" \
+-- 
+2.47.2
+

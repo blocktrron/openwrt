@@ -1,0 +1,34 @@
+From afa0eee3e624e2ac5b8241181e72b62ed227148c Mon Sep 17 00:00:00 2001
+From: David Bauer <mail@david-bauer.net>
+Date: Mon, 10 Feb 2025 05:09:02 +0100
+Subject: [PATCH 3/8] data: add downlink padding option
+
+This option was taken from the GPL code of the Teltonika RUTX50
+(Version 00.07.12).
+
+Link: https://teltonika-networks.com/de/support/gpl-code-center
+
+Signed-off-by: David Bauer <mail@david-bauer.net>
+---
+ data/qmi-service-wda.json | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/data/qmi-service-wda.json b/data/qmi-service-wda.json
+index 4b67e54..ffa3e31 100644
+--- a/data/qmi-service-wda.json
++++ b/data/qmi-service-wda.json
+@@ -84,6 +84,11 @@
+                                        "public-format" : "QmiDataEndpointType"},
+                                      { "name"          : "Interface Number",
+                                        "format"        : "guint32"}] },
++                   { "name"          : "Downlink Minimum Padding",
++                     "id"            : "0x19",
++                     "mandatory"     : "no",
++                     "type"          : "TLV",
++                     "format"        : "guint32" },
+                    { "name"          : "Uplink Data Aggregation Max Datagrams",
+                      "id"            : "0x1B",
+                      "type"          : "TLV",
+-- 
+2.47.2
+

@@ -1,0 +1,105 @@
+From abc4912b063c88010a32ac31bf49e8b95e487233 Mon Sep 17 00:00:00 2001
+From: David Bauer <mail@david-bauer.net>
+Date: Sun, 7 May 2023 18:26:07 +0200
+Subject: [PATCH 1/8] uqmi: enable binding WDS to qmux
+
+Signed-off-by: David Bauer <mail@david-bauer.net>
+---
+ uqmi/commands-wds.c | 56 +++++++++++++++++++++++++++++++++++++++++++++
+ uqmi/commands-wds.h |  9 ++++++--
+ 2 files changed, 63 insertions(+), 2 deletions(-)
+
+diff --git a/uqmi/commands-wds.c b/uqmi/commands-wds.c
+index 20ffe77..f04b657 100644
+--- a/uqmi/commands-wds.c
++++ b/uqmi/commands-wds.c
+@@ -389,6 +389,62 @@ cmd_wds_set_ip_family_prepare(struct qmi_dev *qmi, struct qmi_request *req, stru
+ 	return QMI_CMD_EXIT;
+ }
+ 
++static struct {
++	uint32_t type;
++	uint32_t iface;
++} wds_endpoint_info;
++
++#define cmd_wds_bind_mux_cb no_cb
++
++static enum qmi_cmd_result
++cmd_wds_bind_mux_prepare(struct qmi_dev *qmi, struct qmi_request *req,
++				   struct qmi_msg *msg, char *arg)
++{
++	uint32_t mux_num = strtoul(arg, NULL, 10);
++	struct qmi_wds_bind_mux_data_port_request wds_mux_req = {
++		QMI_INIT_SEQUENCE(
++				  endpoint_info,
++				  .endpoint_type = wds_endpoint_info.type,
++				  .interface_number = wds_endpoint_info.iface,
++				  ),
++		QMI_INIT(mux_id, mux_num),
++		QMI_INIT(client_type, QMI_WDS_CLIENT_TYPE_TETHERED),
++	};
++
++	qmi_set_wds_bind_mux_data_port_request(msg, &wds_mux_req);
++	return QMI_CMD_REQUEST;
++}
++
++#define cmd_wds_ep_iface_cb no_cb
++
++static enum qmi_cmd_result
++cmd_wds_ep_iface_prepare(struct qmi_dev *qmi, struct qmi_request *req,
++			 struct qmi_msg *msg, char *arg)
++{
++	uint32_t iface_num = strtoul(arg, NULL, 10);
++
++	wds_endpoint_info.iface = iface_num;
++	return QMI_CMD_DONE;
++}
++
++#define cmd_wds_ep_type_cb no_cb
++
++static enum qmi_cmd_result
++cmd_wds_ep_type_prepare(struct qmi_dev *qmi, struct qmi_request *req,
++			struct qmi_msg *msg, char *arg)
++{
++	if (strcmp(arg, "hsusb") == 0)
++		wds_endpoint_info.type = QMI_DATA_ENDPOINT_TYPE_HSUSB;
++	else if (strcmp(arg, "pcie") == 0)
++		wds_endpoint_info.type = QMI_DATA_ENDPOINT_TYPE_PCIE;
++	else {
++		uqmi_add_error("Invalid value (valid: hsusb, pcie)");
++		return QMI_CMD_EXIT;
++	}
++
++	return QMI_CMD_DONE;
++}
++
+ static void wds_to_ipv4(const char *name, const uint32_t addr)
+ {
+ 	struct in_addr ip_addr;
+diff --git a/uqmi/commands-wds.h b/uqmi/commands-wds.h
+index 7249a2d..f259fea 100644
+--- a/uqmi/commands-wds.h
++++ b/uqmi/commands-wds.h
+@@ -39,7 +39,10 @@
+ 	__uqmi_command(wds_modify_profile, modify-profile, required, QMI_SERVICE_WDS), \
+ 	__uqmi_command(wds_set_pdp_type, pdp-type, required, CMD_TYPE_OPTION), \
+ 	__uqmi_command(wds_no_roaming, no-roaming, required, CMD_TYPE_OPTION), \
+-	__uqmi_command(wds_get_current_settings, get-current-settings, no, QMI_SERVICE_WDS) \
++	__uqmi_command(wds_get_current_settings, get-current-settings, no, QMI_SERVICE_WDS), \
++	__uqmi_command(wds_bind_mux, bind-mux, required, QMI_SERVICE_WDS), \
++	__uqmi_command(wds_ep_type, endpoint-type, required, CMD_TYPE_OPTION), \
++	__uqmi_command(wds_ep_iface, endpoint-iface, required, CMD_TYPE_OPTION) \
+ 
+ 
+ #define wds_helptext \
+@@ -73,4 +76,6 @@
+ 		"    --auth-type pap|chap|both|none: Use network authentication type\n" \
+ 		"    --no-roaming false|true         To allow roaming, set to false\n" \
+ 		"  --get-current-settings:           Get current connection settings\n" \
+-
++		"  --bind-mux <id>:		     Bind data session to QMUX multiplex (use with options below)\n" \
++		"    --endpoint-type <type>:	     Set endpoint interface type (hsusb, pcie)\n" \
++		"    --endpoint-iface <number>:	     Set endpoint interface number\n"
+-- 
+2.47.2
+

@@ -1,0 +1,78 @@
+From 35221bcca6d75975f3ce484cf7d20cc3090315f1 Mon Sep 17 00:00:00 2001
+From: David Bauer <mail@david-bauer.net>
+Date: Fri, 14 Feb 2025 11:49:14 +0100
+Subject: [PATCH 7/8] wds: implement selection of LTE attach PDNs
+
+---
+ uqmi/commands-wds.c | 36 ++++++++++++++++++++++++++++++++++++
+ uqmi/commands-wds.h |  6 ++++--
+ 2 files changed, 40 insertions(+), 2 deletions(-)
+
+diff --git a/uqmi/commands-wds.c b/uqmi/commands-wds.c
+index 6657a42..b0daf12 100644
+--- a/uqmi/commands-wds.c
++++ b/uqmi/commands-wds.c
+@@ -697,3 +697,39 @@ cmd_wds_delete_profile_prepare(struct qmi_dev *qmi, struct qmi_request *req, str
+ 
+ 	return QMI_CMD_REQUEST;
+ }
++
++#define cmd_wds_set_lte_attach_pdn_cb no_cb
++
++static enum qmi_cmd_result
++cmd_wds_set_lte_attach_pdn_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
++{
++	uint16_t list[8] = {0};
++
++	//parse 1,2,3,4,5
++	char *s = arg;
++	int i = 0;
++	while (s) {
++		if (i >= 8) {
++			fprintf(stderr, "Only 8 attach PDN supported\n");
++			return QMI_CMD_EXIT;
++		}
++
++		list[i] = strtoul(s, &s, 10);
++		i++;
++		if (*s == ',') {
++			s++;
++		} else {
++			fprintf(stderr, "Invalid argument\n");
++			return QMI_CMD_EXIT;
++		}
++	}
++	
++
++	struct qmi_wds_set_lte_attach_pdn_list_request lte_attach_pdn = {
++		QMI_INIT_ARRAY(list, list, i),
++		QMI_INIT(action, QMI_WDS_ATTACH_PDN_LIST_ACTION_DETACH_OR_PDN_DISCONNECT)
++	};
++
++	qmi_set_wds_set_lte_attach_pdn_list_request(msg, &lte_attach_pdn);
++	return QMI_CMD_REQUEST;
++}
+diff --git a/uqmi/commands-wds.h b/uqmi/commands-wds.h
+index ecc36a7..e29ff96 100644
+--- a/uqmi/commands-wds.h
++++ b/uqmi/commands-wds.h
+@@ -44,7 +44,8 @@
+ 	__uqmi_command(wds_get_current_settings, get-current-settings, no, QMI_SERVICE_WDS), \
+ 	__uqmi_command(wds_bind_mux, bind-mux, required, QMI_SERVICE_WDS), \
+ 	__uqmi_command(wds_ep_type, endpoint-type, required, CMD_TYPE_OPTION), \
+-	__uqmi_command(wds_ep_iface, endpoint-iface, required, CMD_TYPE_OPTION) \
++	__uqmi_command(wds_ep_iface, endpoint-iface, required, CMD_TYPE_OPTION), \
++	__uqmi_command(wds_set_lte_attach_pdn, lte-attach-pdn, required, QMI_SERVICE_WDS)
+ 
+ 
+ #define wds_helptext \
+@@ -82,4 +83,5 @@
+ 		"  --get-current-settings:           Get current connection settings\n" \
+ 		"  --bind-mux <id>:		     Bind data session to QMUX multiplex (use with options below)\n" \
+ 		"    --endpoint-type <type>:	     Set endpoint interface type (hsusb, pcie)\n" \
+-		"    --endpoint-iface <number>:	     Set endpoint interface number\n"
++		"    --endpoint-iface <number>:	     Set endpoint interface number\n" \
++		"  --set-lte-attach-pdn #,#,...:     Set list of PDN connections used when attaching to LTE/5G\n"
+-- 
+2.47.2
+

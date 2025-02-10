@@ -1,0 +1,126 @@
+From 6ef869d685f9a18ce6800c01abd55b208588a42f Mon Sep 17 00:00:00 2001
+From: David Bauer <mail@david-bauer.net>
+Date: Fri, 14 Feb 2025 12:04:55 +0100
+Subject: [PATCH 8/8] wds: implement retrieval of profile list
+
+---
+ uqmi/commands-wds.c | 66 ++++++++++++++++++++++++++++++++++++++-------
+ uqmi/commands-wds.h |  2 ++
+ 2 files changed, 59 insertions(+), 9 deletions(-)
+
+diff --git a/uqmi/commands-wds.c b/uqmi/commands-wds.c
+index b0daf12..2253e1a 100644
+--- a/uqmi/commands-wds.c
++++ b/uqmi/commands-wds.c
+@@ -86,6 +86,21 @@ static struct qmi_wds_create_profile_request wds_cp_req = {
+ 	QMI_INIT(apn_disabled_flag, false),
+ };
+ 
++static int
++uqmi_wds_profile_type_parse(const char *type_string, QmiWdsProfileType *type)
++{
++	int i;
++	for (i = 0; i < ARRAY_SIZE(profile_types); i++) {
++		if (strcasecmp(profile_types[i].profile_name, type_string) != 0)
++			continue;
++
++		*type = profile_types[i].profile;
++		return 0;
++	}
++
++	return -1;
++}
++
+ static int
+ uqmi_wds_profile_identifier_parse(char *arg, struct uqmi_wds_profile_identifier *profile)
+ {
+@@ -105,17 +120,12 @@ uqmi_wds_profile_identifier_parse(char *arg, struct uqmi_wds_profile_identifier
+ 
+ 	p_type = strtok(arg, ",");
+ 
+-	int i;
+-	for (i = 0; i < ARRAY_SIZE(profile_types); i++) {
+-		if (strcasecmp(profile_types[i].profile_name, p_type) != 0)
+-			continue;
++	if (uqmi_wds_profile_type_parse(p_type, &profile->type))
++		return -1;
+ 
+-		profile->type = profile_types[i].profile;
+-		profile->index = id;
+-		return 0;
+-	}
++	profile->index = id;
+ 
+-	return -1;
++	return 0;
+ }
+ 
+ #define cmd_wds_set_apn_cb no_cb
+@@ -291,6 +301,44 @@ cmd_wds_modify_profile_prepare(struct qmi_dev *qmi, struct qmi_request *req, str
+ 	return QMI_CMD_REQUEST;
+ }
+ 
++static void
++cmd_wds_get_profile_list_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg)
++{
++	struct qmi_wds_get_profile_list_response res;
++	void *p, *t, *root;
++	int i;
++
++	qmi_parse_wds_get_profile_list_response(msg, &res);
++
++	root = blobmsg_open_table(&status, NULL);
++	p = blobmsg_open_array(&status, "profiles");
++	for (i = 0; i < res.data.profile_list_n; i++) {
++		t = blobmsg_open_table(&status, NULL);
++		blobmsg_add_u32(&status, "index", res.data.profile_list[i].profile_index);
++		blobmsg_add_string(&status, "name", res.data.profile_list[i].profile_name);
++		blobmsg_close_table(&status, t);
++	}
++	blobmsg_close_array(&status, p);
++	blobmsg_close_table(&status, root);
++}
++
++static enum qmi_cmd_result
++cmd_wds_get_profile_list_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
++{
++	struct qmi_wds_get_profile_list_request pl_req = {};
++	QmiWdsProfileType profile_type;
++
++	if (uqmi_wds_profile_type_parse(arg, &profile_type) < 0) {
++		uqmi_add_error("Invalid type (valid: 3gpp or 3gpp2)");
++		return QMI_CMD_EXIT;
++	}
++
++	qmi_set(&pl_req, profile_type, profile_type);
++
++	qmi_set_wds_get_profile_list_request(msg, &pl_req);
++	return QMI_CMD_REQUEST;
++}
++
+ static void
+ cmd_wds_create_profile_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg)
+ {
+diff --git a/uqmi/commands-wds.h b/uqmi/commands-wds.h
+index e29ff96..cd4bbb1 100644
+--- a/uqmi/commands-wds.h
++++ b/uqmi/commands-wds.h
+@@ -36,6 +36,7 @@
+ 	__uqmi_command(wds_get_profile_settings, get-profile-settings, required, QMI_SERVICE_WDS), \
+ 	__uqmi_command(wds_set_default_profile, set-default-profile, required, QMI_SERVICE_WDS), \
+ 	__uqmi_command(wds_get_default_profile, get-default-profile, required, QMI_SERVICE_WDS), \
++	__uqmi_command(wds_get_profile_list, get-profile-list, required, QMI_SERVICE_WDS), \
+ 	__uqmi_command(wds_create_profile, create-profile, required, QMI_SERVICE_WDS), \
+ 	__uqmi_command(wds_modify_profile, modify-profile, required, QMI_SERVICE_WDS), \
+ 	__uqmi_command(wds_delete_profile, delete-profile, required, QMI_SERVICE_WDS), \
+@@ -65,6 +66,7 @@
+ 		"  --get-profile-settings <val,#>:   Get APN profile settings (3gpp, 3gpp2),#\n" \
+ 		"  --set-default-profile <val,#>:    Set default profile number (3gpp, 3gpp2)\n" \
+ 		"  --get-default-profile <val>:      Get default profile number (3gpp, 3gpp2)\n" \
++		"  --get-profile-list <val>:         Get List of profiles (3gpp, 3gpp2)\n" \
+ 		"  --create-profile <val>            Create profile (3gpp, 3gpp2)\n" \
+ 		"    --apn <apn>:                    Use APN\n" \
+ 		"    --pdp-type ipv4|ipv6|ipv4v6>:   Use pdp-type for the connection\n" \
+-- 
+2.47.2
+

@@ -1,0 +1,212 @@
+From 020052e0b24c28c7f5853f62abbeb8d124858bef Mon Sep 17 00:00:00 2001
+From: David Bauer <mail@david-bauer.net>
+Date: Sun, 7 May 2023 20:10:21 +0200
+Subject: [PATCH 2/8] wda: aggregation
+
+---
+ uqmi/commands-wda.c | 143 ++++++++++++++++++++++++++++++++++++++++++--
+ uqmi/commands-wda.h |  16 ++++-
+ 2 files changed, 152 insertions(+), 7 deletions(-)
+
+diff --git a/uqmi/commands-wda.c b/uqmi/commands-wda.c
+index 92fa6c2..634e13a 100644
+--- a/uqmi/commands-wda.c
++++ b/uqmi/commands-wda.c
+@@ -31,27 +31,160 @@ static const struct {
+ 	{ "raw-ip", QMI_WDA_LINK_LAYER_PROTOCOL_RAW_IP },
+ };
+ 
++static const struct {
++	const char *name;
++	QmiWdaDataAggregationProtocol aggreg;
++} aggregation_protocols[] = {
++	{ "tlp", QMI_WDA_DATA_AGGREGATION_PROTOCOL_TLP },
++	{ "qc-cm", QMI_WDA_DATA_AGGREGATION_PROTOCOL_QC_NCM },
++	{ "mbim", QMI_WDA_DATA_AGGREGATION_PROTOCOL_MBIM },
++	{ "rndis", QMI_WDA_DATA_AGGREGATION_PROTOCOL_RNDIS },
++	{ "qmap", QMI_WDA_DATA_AGGREGATION_PROTOCOL_QMAP },
++	{ "qmapv5", QMI_WDA_DATA_AGGREGATION_PROTOCOL_QMAPV5 },
++};
++
++static struct {
++	uint32_t max_size_dl;
++	uint32_t max_datagrams_dl;
++	QmiWdaDataAggregationProtocol aggregation_protocol_dl;
++	uint32_t max_size_ul;
++	uint32_t max_datagrams_ul;
++	QmiWdaDataAggregationProtocol aggregation_protocol_ul;
++} wda_aggregation_info = {
++	.max_size_dl = 0,
++	.max_datagrams_dl = 0,
++	.aggregation_protocol_dl = QMI_WDA_DATA_AGGREGATION_PROTOCOL_DISABLED,
++	.max_size_ul = 0,
++	.max_datagrams_ul = 0,
++	.aggregation_protocol_ul = QMI_WDA_DATA_AGGREGATION_PROTOCOL_DISABLED,
++};
++
+ #define cmd_wda_set_data_format_cb no_cb
+ 
++static void
++cmd_wda_set_data_format_send(struct qmi_msg *msg, QmiWdaLinkLayerProtocol link_layer_proto)
++{
++	struct qmi_wda_set_data_format_request data_req = {
++		QMI_INIT(link_layer_protocol, link_layer_proto),
++		QMI_INIT(uplink_data_aggregation_protocol, wda_aggregation_info.aggregation_protocol_ul),
++		QMI_INIT(uplink_data_aggregation_max_datagrams, wda_aggregation_info.max_datagrams_ul),
++		QMI_INIT(uplink_data_aggregation_max_size, wda_aggregation_info.max_size_ul),
++		QMI_INIT(downlink_data_aggregation_protocol, wda_aggregation_info.aggregation_protocol_dl),
++		QMI_INIT(downlink_data_aggregation_max_datagrams, wda_aggregation_info.max_datagrams_dl),
++		QMI_INIT(downlink_data_aggregation_max_size, wda_aggregation_info.max_size_dl),
++		QMI_INIT(downlink_minimum_padding, 0),
++	};
++
++	qmi_set_wda_set_data_format_request(msg, &data_req);
++}
++
+ static enum qmi_cmd_result
+ cmd_wda_set_data_format_prepare(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg, char *arg)
+ {
+-	struct qmi_wda_set_data_format_request data_req = {};
++	QmiWdaLinkLayerProtocol link_layer_proto;
+ 	int i;
+ 
+ 	for (i = 0; i < ARRAY_SIZE(link_modes); i++) {
+ 		if (strcasecmp(link_modes[i].name, arg) != 0)
+ 			continue;
+ 
+-		qmi_set(&data_req, link_layer_protocol, link_modes[i].val);
+-		qmi_set_wda_set_data_format_request(msg, &data_req);
+-		return QMI_CMD_REQUEST;
++		link_layer_proto = link_modes[i].val;
++	}
++
++	if (link_layer_proto == QMI_WDA_LINK_LAYER_PROTOCOL_UNKNOWN) {
++		uqmi_add_error("Invalid auth mode (valid: 802.3, raw-ip)");
++		return QMI_CMD_EXIT;
++	}
++
++	cmd_wda_set_data_format_send(msg, link_layer_proto);
++
++	return QMI_CMD_REQUEST;
++}
++
++#define cmd_wda_downlink_data_aggregation_protocol_cb no_cb
++
++static enum qmi_cmd_result cmd_wda_downlink_data_aggregation_protocol_prepare(
++	struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg,
++	char *arg)
++{
++	for (uint32_t i = 0; i < ARRAY_SIZE(aggregation_protocols); i++) {
++		if (strcasecmp(aggregation_protocols[i].name, arg))
++			continue;
++
++		wda_aggregation_info.aggregation_protocol_dl = aggregation_protocols[i].aggreg;
++		return QMI_CMD_DONE;
++	}
++
++	uqmi_add_error("Invalid protocol (valid: tlp, qc-cm, mbim, rndis, qmap, qmapv5");
++	return QMI_CMD_EXIT;
++}
++
++#define cmd_wda_uplink_data_aggregation_protocol_cb no_cb
++
++static enum qmi_cmd_result cmd_wda_uplink_data_aggregation_protocol_prepare(
++	struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg,
++	char *arg)
++{
++	for (uint32_t i = 0; i < ARRAY_SIZE(aggregation_protocols); i++) {
++		if (strcasecmp(aggregation_protocols[i].name, arg))
++			continue;
++
++		wda_aggregation_info.aggregation_protocol_ul = aggregation_protocols[i].aggreg;
++		return QMI_CMD_DONE;
+ 	}
+ 
+-	uqmi_add_error("Invalid auth mode (valid: 802.3, raw-ip)");
++	uqmi_add_error("Invalid protocol (valid: tlp, qc-cm, mbim, rndis, qmap, qmapv5");
+ 	return QMI_CMD_EXIT;
+ }
+ 
++#define cmd_wda_downlink_data_aggregation_max_datagrams_cb no_cb
++
++static enum qmi_cmd_result cmd_wda_downlink_data_aggregation_max_datagrams_prepare(
++	struct qmi_dev * qmi, struct qmi_request * req, struct qmi_msg * msg,
++	char *arg)
++{
++	uint32_t max_datagrams = strtoul(arg, NULL, 10);
++
++	wda_aggregation_info.max_datagrams_dl = max_datagrams;
++	return QMI_CMD_DONE;
++}
++
++#define cmd_wda_downlink_data_aggregation_max_size_cb no_cb
++
++static enum qmi_cmd_result cmd_wda_downlink_data_aggregation_max_size_prepare(
++	struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg,
++	char *arg)
++{
++	uint32_t max_size = strtoul(arg, NULL, 10);
++
++	wda_aggregation_info.max_size_dl = max_size;
++	return QMI_CMD_DONE;
++}
++
++#define cmd_wda_uplink_data_aggregation_max_datagrams_cb no_cb
++
++static enum qmi_cmd_result cmd_wda_uplink_data_aggregation_max_datagrams_prepare(
++	struct qmi_dev * qmi, struct qmi_request * req, struct qmi_msg * msg,
++	char *arg)
++{
++	uint32_t max_datagrams = strtoul(arg, NULL, 10);
++
++	wda_aggregation_info.max_datagrams_ul = max_datagrams;
++	return QMI_CMD_DONE;
++}
++
++#define cmd_wda_uplink_data_aggregation_max_size_cb no_cb
++
++static enum qmi_cmd_result cmd_wda_uplink_data_aggregation_max_size_prepare(
++	struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg,
++	char *arg)
++{
++	uint32_t max_size = strtoul(arg, NULL, 10);
++
++	wda_aggregation_info.max_size_ul = max_size;
++	return QMI_CMD_DONE;
++}
++
+ static void
+ cmd_wda_get_data_format_cb(struct qmi_dev *qmi, struct qmi_request *req, struct qmi_msg *msg)
+ {
+diff --git a/uqmi/commands-wda.h b/uqmi/commands-wda.h
+index 3ae7b7f..ca7148c 100644
+--- a/uqmi/commands-wda.h
++++ b/uqmi/commands-wda.h
+@@ -21,10 +21,22 @@
+ 
+ #define __uqmi_wda_commands \
+ 	__uqmi_command(wda_set_data_format, wda-set-data-format, required, QMI_SERVICE_WDA), \
++	__uqmi_command(wda_downlink_data_aggregation_protocol, dl-aggregation-protocol, required, CMD_TYPE_OPTION), \
++	__uqmi_command(wda_downlink_data_aggregation_max_datagrams, dl-datagram-max-count, required, CMD_TYPE_OPTION), \
++	__uqmi_command(wda_downlink_data_aggregation_max_size, dl-datagram-max-size, required, CMD_TYPE_OPTION), \
++	__uqmi_command(wda_uplink_data_aggregation_protocol, ul-aggregation-protocol, required, CMD_TYPE_OPTION), \
++	__uqmi_command(wda_uplink_data_aggregation_max_datagrams, ul-datagram-max-count, required, CMD_TYPE_OPTION), \
++	__uqmi_command(wda_uplink_data_aggregation_max_size, ul-datagram-max-size, required, CMD_TYPE_OPTION), \
+ 	__uqmi_command(wda_get_data_format, wda-get-data-format, no, QMI_SERVICE_WDA)
+ 
+ 
+ #define wda_helptext \
+-		"  --wda-set-data-format <type>:     Set data format (type: 802.3|raw-ip)\n" \
+-		"  --wda-get-data-format:            Get data format\n" \
++		"  --wda-set-data-format <type>:		Set data format (type: 802.3|raw-ip)\n" \
++		"    --dl-aggregation-protocol <proto>:		Set downlink aggregation protocol (proto: tlp|qc-cm|mbim|rndis|qmap|qmapv5)\n" \
++		"    --dl-datagram-max-count <size>:		Set downlink aggregation max datagrams (number)\n" \
++		"    --dl-datagram-max-size <size>:		Set downlink aggregation max datagram size (number)\n" \
++		"    --ul-aggregation-protocol <proto>:		Set uplink aggregation protocol (proto: tlp|qc-cm|mbim|rndis|qmap|qmapv5)\n" \
++		"    --ul-datagram-max-count <size>:		Set uplink aggregation max datagrams (number)\n" \
++		"    --ul-datagram-max-size <size>:		Set uplink aggregation max datagram size (number)\n" \
++		"  --wda-get-data-format:			Get data format\n" \
+ 
+-- 
+2.47.2
+
