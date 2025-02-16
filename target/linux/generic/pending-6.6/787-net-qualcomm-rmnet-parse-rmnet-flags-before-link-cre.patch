@@ -1,0 +1,55 @@
+From 0ca15c389f71d8e60b018fef09cebd571a3c9c83 Mon Sep 17 00:00:00 2001
+From: David Bauer <mail@david-bauer.net>
+Date: Sun, 16 Feb 2025 22:19:21 +0100
+Subject: [PATCH] net: qualcomm: rmnet: parse rmnet flags before link creation
+
+The rmnet specific flags need to be parsed before link creation.
+This is required to determine the correct maximum MTU size based on the
+protocol version used.
+
+Signed-off-by: David Bauer <mail@david-bauer.net>
+---
+ .../ethernet/qualcomm/rmnet/rmnet_config.c    | 19 ++++++++++---------
+ 1 file changed, 10 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/net/ethernet/qualcomm/rmnet/rmnet_config.c b/drivers/net/ethernet/qualcomm/rmnet/rmnet_config.c
+index f3bea196a8f9..9f29be087d0d 100644
+--- a/drivers/net/ethernet/qualcomm/rmnet/rmnet_config.c
++++ b/drivers/net/ethernet/qualcomm/rmnet/rmnet_config.c
+@@ -151,6 +151,16 @@ static int rmnet_newlink(struct net *src_net, struct net_device *dev,
+ 		goto err0;
+ 
+ 	port = rmnet_get_port_rtnl(real_dev);
++
++	if (data[IFLA_RMNET_FLAGS]) {
++		struct ifla_rmnet_flags *flags;
++
++		flags = nla_data(data[IFLA_RMNET_FLAGS]);
++		data_format &= ~flags->mask;
++		data_format |= flags->flags & flags->mask;
++	}
++	port->data_format = data_format;
++
+ 	err = rmnet_vnd_newlink(mux_id, dev, port, real_dev, ep, extack);
+ 	if (err)
+ 		goto err1;
+@@ -164,16 +174,7 @@ static int rmnet_newlink(struct net *src_net, struct net_device *dev,
+ 
+ 	hlist_add_head_rcu(&ep->hlnode, &port->muxed_ep[mux_id]);
+ 
+-	if (data[IFLA_RMNET_FLAGS]) {
+-		struct ifla_rmnet_flags *flags;
+-
+-		flags = nla_data(data[IFLA_RMNET_FLAGS]);
+-		data_format &= ~flags->mask;
+-		data_format |= flags->flags & flags->mask;
+-	}
+-
+ 	netdev_dbg(dev, "data format [0x%08X]\n", data_format);
+-	port->data_format = data_format;
+ 
+ 	return 0;
+ 
+-- 
+2.47.2
+
