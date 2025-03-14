@@ -85,6 +85,9 @@
 		reg = <5>;
 		compatible = "ethernet-phy-ieee802.3-c45";
 
+		eee-broken-100tx;
+		eee-broken-1000t;
+
 		leds {
 			#address-cells = <1>;
 			#size-cells = <0>;
