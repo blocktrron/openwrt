@@ -1,0 +1,42 @@
+--- a/drivers/net/phy/mxl-gpy.c
++++ b/drivers/net/phy/mxl-gpy.c
+@@ -35,6 +35,11 @@
+ #define PHY_CTL1_MDICD		BIT(3)
+ #define PHY_CTL1_MDIAB		BIT(2)
+ #define PHY_CTL1_AMDIX		BIT(0)
++
++#define PHY_CTL2		0x14
++#define PHY_CTL2_PSCL		BIT(2)	/* Power scaling */
++#define PHY_CTL2_ANPD		BIT(1)	/* Auto-neg power down */
++
+ #define PHY_MIISTAT		0x18	/* MII state */
+ #define PHY_IMASK		0x19	/* interrupt mask */
+ #define PHY_ISTAT		0x1A	/* interrupt status */
+@@ -114,6 +119,10 @@
+ #define VSPEC1_MBOX_CMD_RD	(0 << 8)
+ #define VSPEC1_MBOX_CMD_READY	BIT(15)
+ 
++/* Packet Manager */
++#define VSPEC1_PM_CTRL		0x0C
++#define VSPEC1_PM_CTRL_PM_EN	BIT(0)
++
+ /* WoL */
+ #define VPSPEC2_WOL_CTL		0x0E06
+ #define VPSPEC2_WOL_AD01	0x0E08
+@@ -331,6 +340,16 @@ static int gpy_probe(struct phy_device *
+ 	if (ret)
+ 		return ret;
+ 
++	/* Disable LPI generation by packet manager*/
++	phy_modify_mmd(phydev, MDIO_MMD_VEND1, VSPEC1_PM_CTRL,
++		       VSPEC1_PM_CTRL_PM_EN, 0);
++
++	/* Disable Power consumption scaling */
++	phy_modify(phydev, PHY_CTL2, PHY_CTL2_PSCL, 0);
++
++	/* Disable aneg power down */
++	phy_modify(phydev, PHY_CTL2, PHY_CTL2_ANPD, 0);
++
+ 	/* Show GPY PHY FW version in dmesg */
+ 	phydev_info(phydev, "Firmware Version: %d.%d (0x%04X%s)\n",
+ 		    priv->fw_major, priv->fw_minor, fw_version,
