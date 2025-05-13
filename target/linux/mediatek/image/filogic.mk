@@ -1,4 +1,6 @@
 DTS_DIR := $(DTS_DIR)/mediatek
+DEVICE_VARS += SUPPORTED_TELTONIKA_DEVICES
+DEVICE_VARS += SUPPORTED_TELTONIKA_HW_MODS
 
 define Image/Prepare
 	# For UBI we want only one extra block
@@ -1650,6 +1652,24 @@ define Device/ruijie_rg-x60-pro
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
 endef
 TARGET_DEVICES += ruijie_rg-x60-pro
+
+define Device/teltonika_rutc50
+  DEVICE_VENDOR := Teltonika
+  DEVICE_MODEL := RUTC50
+  SUPPORTED_TELTONIKA_DEVICES := teltonika,rutc
+  DEVICE_DTS := mt7981a-teltonika-rutc50
+  DEVICE_DTS_DIR := ../dts
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  KERNEL_IN_UBI := 1
+  UBINIZE_OPTS := -E 5
+  DEVICE_PACKAGES := kmod-mt7915e kmod-mt7981-firmware mt7981-wo-firmware kmod-usb3 kmod-usb-net-qmi-wwan \
+  kmod-usb-serial-option kmod-gpio-nxp-74hc164
+  IMAGES += factory.bin
+  IMAGE/factory.bin := append-ubi | append-teltonika-metadata
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+endef
+TARGET_DEVICES += teltonika_rutc50
 
 define Device/tplink_archer-ax80-v1
   DEVICE_VENDOR := TP-Link

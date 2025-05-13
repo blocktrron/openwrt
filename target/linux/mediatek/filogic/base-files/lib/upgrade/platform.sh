@@ -148,6 +148,10 @@ platform_do_upgrade() {
 		CI_UBIPART="ubi0"
 		nand_do_upgrade "$1"
 		;;
+	teltonika,rutc50)
+		CI_UBIPART="$(cmdline_get_var ubi.mtd)"
+		nand_do_upgrade "$1"
+		;;
 	ubnt,unifi-6-plus)
 		CI_KERNPART="kernel0"
 		EMMC_ROOT_DEV="$(cmdline_get_var root)"
