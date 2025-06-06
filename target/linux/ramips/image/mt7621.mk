@@ -230,7 +230,7 @@ endef
 define Build/zyxel-nwa-fit
 	# "77 e1" is NWA90AX
 	$(TOPDIR)/scripts/mkits-zyxel-fit.sh \
-		$@.its $@ "6b e1 6f e1 77 e1 ff ff ff ff"
+		$@.its $@ "$(1)"
 	PATH=$(LINUX_DIR)/scripts/dtc:$(PATH) mkimage -f $@.its $@.new
 	@mv $@.new $@
 endef
@@ -3755,7 +3755,8 @@ define Device/zyxel_nwa-ax
   DEVICE_PACKAGES := kmod-mt7915-firmware zyxel-bootconfig
   KERNEL := kernel-bin | lzma | fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb
   IMAGES += factory.bin ramboot-factory.bin
-  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | zyxel-nwa-fit
+  IMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi | \
+	zyxel-nwa-fit 6b e1 6f e1 77 e1 ff ff ff ff
   IMAGE/ramboot-factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-ubi
 endef
 
