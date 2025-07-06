@@ -856,6 +856,208 @@ hostapd_vendor_elements(struct ubus_context *ctx, struct ubus_object *obj,
 	return UBUS_STATUS_OK;
 }
 
+static int
+hostapd_vendor_element_remove(struct hostapd_data *hapd, const char *oui,
+			      uint32_t subtype)
+{
+	struct hostapd_bss_config *bss = hapd->conf;
+	struct wpabuf *elems;
+	const u8 *pos;
+	size_t len, new_len, copy_len, removal_len;
+	u8 ie_type, ie_len, ie_vs_subtype;
+	int num_removed = 0;
+
+	/* None set */
+	if (!bss->vendor_elements)
+		return 0;
+
+	elems = bss->vendor_elements;
+	pos = wpabuf_head_u8(elems);
+	len = wpabuf_len(elems);
+	new_len = len;
+
+	while (len >= 6) {
+		ie_type = pos[0];
+		ie_len = pos[1];
+		ie_vs_subtype = pos[5];
+		if (ie_type != WLAN_EID_VENDOR_SPECIFIC ||
+		    ie_len < 4 || len < 2 + ie_len)
+			goto out_fail; /* malformed element */
+
+		if (os_memcmp(pos + 2, oui, 3) == 0 && ie_vs_subtype == subtype) {
+			/* Remove element from buffer */
+			removal_len = 2 + ie_len;
+			new_len -= removal_len;
+			copy_len = len - removal_len;
+			if (removal_len > len)
+				goto out_fail; /* malformed element */
+
+			if (copy_len > 0)
+				os_memmove(pos, pos + removal_len, copy_len);
+			num_removed++;
+
+			/* pos stays identical */
+			len -= removal_len;
+		} else {
+			pos += (2 + ie_len);
+			len -= (2 + ie_len);
+		}
+	}
+
+	/* Check if buffer was altered */
+	if (new_len == wpabuf_len(elems))
+		return 0; /* no change */
+
+	elems->used = new_len;
+
+	return num_removed;
+out_fail:
+	wpabuf_free(bss->vendor_elements);
+	bss->vendor_elements = NULL;
+	return -1; /* error */
+}
+
+enum {
+	ADD_VENDOR_ELEMENT_OUI,
+	ADD_VENDOR_ELEMENT_SUBTYPE,
+	ADD_VENDOR_ELEMENT_DATA,
+	__ADD_VENDOR_ELEMENT_MAX
+};
+
+static const struct blobmsg_policy add_ve_policy[__ADD_VENDOR_ELEMENT_MAX] = {
+	[ADD_VENDOR_ELEMENT_OUI] = { "oui", BLOBMSG_TYPE_STRING },
+	[ADD_VENDOR_ELEMENT_SUBTYPE] = { "subtype", BLOBMSG_TYPE_INT32 },
+	/* vendor elements are provided as hex-string */
+	[ADD_VENDOR_ELEMENT_DATA] = { "data", BLOBMSG_TYPE_STRING },
+};
+
+static int
+hostapd_add_vendor_element(struct ubus_context *ctx, struct ubus_object *obj,
+			   struct ubus_request_data *req, const char *method,
+			   struct blob_attr *msg)
+{
+	struct blob_attr *tb[__ADD_VENDOR_ELEMENT_MAX];
+	struct hostapd_data *hapd = get_hapd_from_object(obj);
+	struct hostapd_bss_config *bss = hapd->conf;
+	char *oui_str;
+	char oui[3];
+	uint32_t subtype;
+	char *element_data_str;
+	size_t element_data_len;
+	struct wpabuf *elems;
+	size_t new_len;
+
+	blobmsg_parse(add_ve_policy, __ADD_VENDOR_ELEMENT_MAX, tb,
+		      blob_data(msg), blob_len(msg));
+
+	if (!tb[ADD_VENDOR_ELEMENT_OUI] || !tb[ADD_VENDOR_ELEMENT_DATA] ||
+	    !tb[ADD_VENDOR_ELEMENT_SUBTYPE])
+		return UBUS_STATUS_INVALID_ARGUMENT;
+	
+	/* OUI */
+	oui_str = blobmsg_get_string(tb[ADD_VENDOR_ELEMENT_OUI]);
+	if (strlen(oui_str) != 6 ||
+	    hexstr2bin(oui_str, oui, 3) < 0)
+		return UBUS_STATUS_INVALID_ARGUMENT;
+
+	/* Subtype*/
+	subtype = blobmsg_get_u32(tb[ADD_VENDOR_ELEMENT_SUBTYPE]);
+	if (subtype > 0xFF)
+		return UBUS_STATUS_INVALID_ARGUMENT;
+
+	/* Data */
+	element_data_str = blobmsg_get_string(tb[ADD_VENDOR_ELEMENT_DATA]);
+	if (strlen(element_data_str) & 0x01)
+		return UBUS_STATUS_INVALID_ARGUMENT;
+	element_data_len = strlen(element_data_str) / 2;
+
+	/* Remove existing element with same OUI and subtype */
+	if (hostapd_vendor_element_remove(hapd, oui, subtype) < 0) {
+		return UBUS_STATUS_INVALID_ARGUMENT;
+	}
+
+	/* Prepare new buffer */
+	new_len = 2 + 3 + 1 + element_data_len;
+	if (bss->vendor_elements && wpabuf_len(bss->vendor_elements) > 0) {
+		new_len += wpabuf_len(bss->vendor_elements);
+	}
+	elems = wpabuf_alloc(new_len);
+	if (elems == NULL) {
+		return UBUS_STATUS_INVALID_ARGUMENT;
+	}
+
+	/* Copy existing vendor elements if any */
+	if (bss->vendor_elements && wpabuf_len(bss->vendor_elements) > 0) {
+		wpabuf_put_data(elems, wpabuf_head_u8(bss->vendor_elements),
+			      wpabuf_len(bss->vendor_elements));
+	}
+
+	/* Add new vendor element */
+	wpabuf_put_u8(elems, WLAN_EID_VENDOR_SPECIFIC);
+	wpabuf_put_u8(elems, 3 + 1 + element_data_len);
+	wpabuf_put_data(elems, oui, 3);
+	wpabuf_put_u8(elems, subtype);
+	hexstr2bin(element_data_str, wpabuf_put(elems, element_data_len), element_data_len);
+
+	if (bss->vendor_elements) {
+		wpabuf_free(bss->vendor_elements);
+		bss->vendor_elements = NULL;
+	}
+
+	bss->vendor_elements = elems;
+	if (ieee802_11_update_beacons(hapd->iface) != 0)
+		return UBUS_STATUS_NOT_SUPPORTED;
+
+	return UBUS_STATUS_OK;
+}
+
+enum {
+	REMOVE_VENDOR_ELEMENT_OUI,
+	REMOVE_VENDOR_ELEMENT_SUBTYPE,
+	REMOVE_VENDOR_ELEMENT_DATA,
+	__REMOVE_VENDOR_ELEMENT_MAX
+};
+
+static const struct blobmsg_policy remove_ve_policy[__REMOVE_VENDOR_ELEMENT_MAX] = {
+	[REMOVE_VENDOR_ELEMENT_OUI] = { "oui", BLOBMSG_TYPE_STRING },
+	[REMOVE_VENDOR_ELEMENT_SUBTYPE] = { "subtype", BLOBMSG_TYPE_INT32 },
+};
+
+static int
+hostapd_remove_vendor_element(struct ubus_context *ctx, struct ubus_object *obj,
+			   struct ubus_request_data *req, const char *method,
+			   struct blob_attr *msg)
+{
+	struct blob_attr *tb[__REMOVE_VENDOR_ELEMENT_MAX];
+	struct hostapd_data *hapd = get_hapd_from_object(obj);
+	char *oui_str;
+	char oui[3];
+	uint32_t subtype;
+
+	blobmsg_parse(remove_ve_policy, __REMOVE_VENDOR_ELEMENT_MAX, tb,
+		      blob_data(msg), blob_len(msg));
+
+	if (!tb[REMOVE_VENDOR_ELEMENT_OUI] || !tb[REMOVE_VENDOR_ELEMENT_SUBTYPE])
+		return UBUS_STATUS_INVALID_ARGUMENT;
+
+	/* OUI */
+	oui_str = blobmsg_get_string(tb[REMOVE_VENDOR_ELEMENT_OUI]);
+	if (strlen(oui_str) != 6 ||
+	    hexstr2bin(oui_str, oui, 3) < 0)
+		return UBUS_STATUS_INVALID_ARGUMENT;
+
+	/* Subtype*/
+	subtype = blobmsg_get_u32(tb[REMOVE_VENDOR_ELEMENT_SUBTYPE]);
+	if (subtype > 0xFF)
+		return UBUS_STATUS_INVALID_ARGUMENT;
+
+	if (hostapd_vendor_element_remove(hapd, oui, subtype) < 0) {
+		return UBUS_STATUS_INVALID_ARGUMENT;
+	}
+
+	return UBUS_STATUS_OK;
+}
+
 static void
 hostapd_rrm_print_nr(struct hostapd_neighbor_entry *nr)
 {
@@ -1637,6 +1839,8 @@ static const struct ubus_method bss_methods[] = {
 #ifdef NEED_AP_MLME
 	UBUS_METHOD("switch_chan", hostapd_switch_chan, csa_policy),
 #endif
+	UBUS_METHOD("add_vendor_element", hostapd_add_vendor_element, add_ve_policy),
+	UBUS_METHOD("remove_vendor_element", hostapd_remove_vendor_element, remove_ve_policy),
 	UBUS_METHOD("set_vendor_elements", hostapd_vendor_elements, ve_policy),
 	UBUS_METHOD("notify_response", hostapd_notify_response, notify_policy),
 	UBUS_METHOD("bss_mgmt_enable", hostapd_bss_mgmt_enable, bss_mgmt_enable_policy),
