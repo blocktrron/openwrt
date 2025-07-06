@@ -1978,6 +1978,16 @@ void hostapd_ubus_notify_beacon_report(
 	struct hostapd_data *hapd, const u8 *addr, u8 token, u8 rep_mode,
 	struct rrm_measurement_beacon_report *rep, size_t len)
 {
+	void *subelement_table = NULL, *subelement_element_table = NULL;
+	void *subelement_array = NULL;
+	size_t optional_len = len - sizeof(*rep);
+	char *subelement_content_buf = NULL, *subelement_element_content_buf = NULL;
+
+	u8 subelement_id;
+	u8 subelement_len;
+	u8 *subelement_data;
+	u8 *subelement;
+
 	if (!hapd->ubus.obj.has_subscribers)
 		return;
 
@@ -1998,6 +2008,41 @@ void hostapd_ubus_notify_beacon_report(
 	blobmsg_add_u16(&b, "parent-tsf", rep->parent_tsf);
 	blobmsg_add_u16(&b, "rep-mode", rep_mode);
 
+	if (optional_len == 0)
+		goto u_notify;
+
+	/* Add optional subelements */
+	subelement_table = blobmsg_open_table(&b, "optional-subelements");
+	subelement_content_buf = blobmsg_alloc_string_buffer(&b, "data", 2 * optional_len + 1);
+	if (subelement_content_buf) {
+		wpa_snprintf_hex(subelement_content_buf, 2 * optional_len + 1, rep->variable, optional_len);
+		blobmsg_add_string_buffer(&b);
+	}
+
+	/* Parse subelements */
+	subelement_array = blobmsg_open_array(&b, "elements");
+	for (subelement = rep->variable;
+	     subelement + 2 < rep->variable + optional_len && subelement + 2 + subelement[1] <= rep->variable + optional_len;
+	     subelement += 2 + subelement[1]) {
+		subelement_id = subelement[0];
+		subelement_len = subelement[1];
+		subelement_data = subelement + 2;
+
+		subelement_element_table = blobmsg_open_table(&b, "");
+
+		/* Add raw */
+		blobmsg_add_u32(&b, "id", subelement_id);
+		subelement_element_content_buf = blobmsg_alloc_string_buffer(&b, "data", 2 * subelement_len + 1);
+		wpa_snprintf_hex(subelement_element_content_buf, 2 * subelement_len + 1, subelement_data, subelement_len);
+		blobmsg_add_string_buffer(&b);
+
+		blobmsg_close_table(&b, subelement_element_table);
+	}
+	blobmsg_close_array(&b, subelement_array);
+
+u_notify:
+	if (subelement_table)
+		blobmsg_close_table(&b, subelement_table);
 	ubus_notify(ctx, &hapd->ubus.obj, "beacon-report", b.head, -1);
 }
 
