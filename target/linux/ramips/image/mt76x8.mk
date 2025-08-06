@@ -5,6 +5,8 @@
 include ./common-tp-link.mk
 
 DEFAULT_SOC := mt7628an
+DEVICE_VARS += SUPPORTED_TELTONIKA_DEVICES
+DEVICE_VARS += SUPPORTED_TELTONIKA_HW_MODS
 
 define Build/elecom-header
 	$(eval model_id=$(1))
