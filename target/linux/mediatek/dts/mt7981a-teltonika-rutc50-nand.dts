@@ -7,9 +7,16 @@
 
 #include "mt7981b.dtsi"
 
+/**
+ * RUTX50 exists in two variants, one NAND variant and a eMMC variant with eSIM support.
+ *
+ * Order-Code NAND: RUTC50 *0****
+ * Order-Code eMMC: RUTC50 *1****
+ */
+
 / {
-	model = "Teltonika RUTC50";
-	compatible = "teltonika,rutc50", "mediatek,mt7981";
+	model = "Teltonika RUTC50 (NAND)";
+	compatible = "teltonika,rutc50-nand", "mediatek,mt7981";
 
 	aliases {
 		serial0 = &uart0;

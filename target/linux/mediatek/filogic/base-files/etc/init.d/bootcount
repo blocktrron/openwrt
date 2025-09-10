@@ -23,7 +23,7 @@ boot() {
 		EOF
 		logger "bootcount: rd23 model detected, nvram was updated"
 		;;
-	teltonika,rutc50)
+	teltonika,rutc50-nand)
 		#Bootloader expect successfull startup value after update, we need to write success value to bootconfig partition
 		#otherwise bootloader will fallback to previous root partition
 		. /lib/functions.sh

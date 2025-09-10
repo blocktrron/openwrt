@@ -2208,11 +2208,13 @@ define Device/snr_snr-cpe-ax2
 endef
 TARGET_DEVICES += snr_snr-cpe-ax2
 
-define Device/teltonika_rutc50
+define Device/teltonika_rutc50-nand
   DEVICE_VENDOR := Teltonika
   DEVICE_MODEL := RUTC50
+  DEVICE_VARIANT := (NAND)
   SUPPORTED_TELTONIKA_DEVICES := teltonika,rutc
-  DEVICE_DTS := mt7981a-teltonika-rutc50
+  SUPPORTED_DEVICES += teltomika,rutc50
+  DEVICE_DTS := mt7981a-teltonika-rutc50-nand
   DEVICE_DTS_DIR := ../dts
   BLOCKSIZE := 128k
   PAGESIZE := 2048
@@ -2224,7 +2226,7 @@ define Device/teltonika_rutc50
   IMAGE/factory.bin := append-ubi | append-teltonika-metadata
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
 endef
-TARGET_DEVICES += teltonika_rutc50
+TARGET_DEVICES += teltonika_rutc50-nand
 
 define Device/tenbay_wr3000k
   DEVICE_VENDOR := Tenbay
