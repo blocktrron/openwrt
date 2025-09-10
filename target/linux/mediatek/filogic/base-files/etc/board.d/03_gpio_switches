@@ -8,7 +8,7 @@ case "$board" in
 huasifei,wh3000-pro)
 	ucidef_add_gpio_switch "modem_power" "Modem power" "modem_power" "0"
 	;;
-teltonika,rutc50)
+teltonika,-nand)
 	ucidef_add_gpio_switch "modem_power" "Modem power button" "modem_power" "1"
 	ucidef_add_gpio_switch "modem_reset" "Modem reset" "modem_reset" "0"
 	;;

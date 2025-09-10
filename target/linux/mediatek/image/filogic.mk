@@ -1653,11 +1653,13 @@ define Device/ruijie_rg-x60-pro
 endef
 TARGET_DEVICES += ruijie_rg-x60-pro
 
-define Device/teltonika_rutc50
+define Device/teltonika_rutc50-nand
   DEVICE_VENDOR := Teltonika
   DEVICE_MODEL := RUTC50
+  DEVICE_VARIANT := (NAND)
   SUPPORTED_TELTONIKA_DEVICES := teltonika,rutc
-  DEVICE_DTS := mt7981a-teltonika-rutc50
+  SUPPORTED_DEVICES += teltomika,rutc50
+  DEVICE_DTS := mt7981a-teltonika-rutc50-nand
   DEVICE_DTS_DIR := ../dts
   BLOCKSIZE := 128k
   PAGESIZE := 2048
