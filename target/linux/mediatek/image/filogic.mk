@@ -1671,7 +1671,7 @@ define Device/teltonika_rutc50-nand
   IMAGE/factory.bin := append-ubi | append-teltonika-metadata
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
 endef
-TARGET_DEVICES += teltonika_rutc50
+TARGET_DEVICES += teltonika_rutc50-nand
 
 define Device/tplink_archer-ax80-v1
   DEVICE_VENDOR := TP-Link
