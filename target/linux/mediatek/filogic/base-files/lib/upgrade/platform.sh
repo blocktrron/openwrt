@@ -175,7 +175,7 @@ platform_do_upgrade() {
 		CI_ROOTPART="rootfs"
 		nand_do_upgrade "$1"
 		;;
-	teltonika,rutc50)
+	teltonika,rutc50-nand)
 		CI_UBIPART="$(cmdline_get_var ubi.mtd)"
 		nand_do_upgrade "$1"
 		;;
