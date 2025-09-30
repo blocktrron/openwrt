@@ -5,7 +5,7 @@
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>
 
-#include "mt7981b.dtsi"
+#include "mt7981.dtsi"
 
 /**
  * RUTX50 exists in two variants, one NAND variant and a eMMC variant with eSIM support.
