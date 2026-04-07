@@ -138,6 +138,9 @@
 		reset-assert-us = <10000>;
 		reset-deassert-us = <10000>;
 
+		eee-broken-100tx;
+		eee-broken-1000t;
+
 		leds {
 			#address-cells = <1>;
 			#size-cells = <0>;
