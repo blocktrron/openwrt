@@ -3309,6 +3309,15 @@ define Device/winchannel_wb2000
 endef
 TARGET_DEVICES += winchannel_wb2000
 
+define Device/wodesys_wdr302a-v2
+  SOC := qca9531
+  DEVICE_VENDOR := Wodesys
+  DEVICE_MODEL := WDR302A
+  DEVICE_PACKAGES := kmod-ath10k-ct ath10k-firmware-qca988x-ct
+  IMAGE_SIZE := 16000k
+endef
+TARGET_DEVICES += wodesys_wdr302a-v2
+
 define Device/xiaomi_aiot-ac2350
   SOC := qca9563
   DEVICE_VENDOR := Xiaomi
