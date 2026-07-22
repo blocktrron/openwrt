@@ -35,6 +35,7 @@
 #define RT305X_ESW_REG_ISR		0x00
 #define RT305X_ESW_REG_IMR		0x04
 #define RT305X_ESW_REG_FCT0		0x08
+#define RT305X_ESW_REG_FCT1		0x08
 #define RT305X_ESW_REG_PFC1		0x14
 #define RT305X_ESW_REG_ATS		0x24
 #define RT305X_ESW_REG_ATS0		0x28
@@ -454,9 +455,11 @@ static void esw_hw_init(struct rt305x_esw *esw)
 	int i;
 	u8 port_disable = 0;
 	u8 port_map = RT305X_ESW_PMAP_LLLLLL;
+	u32 fct2_val;
 
 	/* vodoo from original driver */
-	esw_w32(esw, 0xC8A07850, RT305X_ESW_REG_FCT0);
+	esw_w32(esw, 0xFFE0DFD0, RT305X_ESW_REG_FCT0);
+	esw_w32(esw, 0x00000008, RT305X_ESW_REG_FCT1);
 	esw_w32(esw, 0x00000000, RT305X_ESW_REG_SGC2);
 	/* Port priority 1 for all ports, vlan enabled. */
 	esw_w32(esw, 0x00005555 |
@@ -473,10 +476,10 @@ static void esw_hw_init(struct rt305x_esw *esw)
 		      (RT305X_ESW_PORTS_NOCPU << RT305X_ESW_POC2_UNTAG_EN_S)),
 		RT305X_ESW_REG_POC2);
 
+	fct2_val = (0xcf << 13) | (0xb0 << 8) | 0x0c;
 	if (esw->reg_initval_fct2)
-		esw_w32(esw, esw->reg_initval_fct2, RT305X_ESW_REG_FCT2);
-	else
-		esw_w32(esw, 0x0002500c, RT305X_ESW_REG_FCT2);
+		fct2_val = esw->reg_initval_fct2;
+	esw_w32(esw, fct2_val, RT305X_ESW_REG_FCT2);
 
 	/* 300s aging timer, max packet len 1536, broadcast storm prevention
 	 * disabled, disable collision abort, mac xor48 hash, 10 packet back

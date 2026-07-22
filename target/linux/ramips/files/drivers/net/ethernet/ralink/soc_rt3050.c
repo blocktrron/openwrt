@@ -103,6 +103,7 @@ static int rt5350_fwd_config(struct fe_priv *priv)
 {
 	struct net_device *dev = priv_netdev(priv);
 
+	fe_w32(fe_r32(RT5350_SDM_CFG) | BIT(23), RT5350_SDM_CFG);
 	rt5350_rxcsum_config((dev->features & NETIF_F_RXCSUM));
 
 	return 0;
